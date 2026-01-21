@@ -842,6 +842,169 @@ EOF
     print_success "Generated .env file with your custom configuration"
 }
 
+generate_php_configs() {
+    ((CURRENT_STEP++))
+    show_progress $CURRENT_STEP "Generating PHP configuration files"
+
+    print_step "🐘 Generating PHP configuration files"
+
+    # Generate development PHP config
+    generate_php_config "docker/php/php.ini.development" "development"
+
+    # Generate production PHP config
+    generate_php_config "docker/php/php.ini.production" "production"
+}
+
+generate_php_config() {
+    local config_file="$1"
+    local environment="$2"
+
+    # Base PHP configuration with dynamic values
+    cat > "$config_file" << EOF
+[PHP]
+
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+
+engine = On
+short_open_tag = Off
+precision = 14
+output_buffering = 4096
+zlib.output_compression = Off
+implicit_flush = Off
+unserialize_callback_func =
+serialize_precision = -1
+disable_functions =
+disable_classes =
+zend.enable_gc = On
+zend.exception_ignore_args = Off
+zend.exception_string_param_max_len = 0
+expose_php = $(if [ "$environment" = "production" ]; then echo "Off"; else echo "On"; fi)
+
+;;;;;;;;;;;;;;;;;
+; Resource Limits ;
+;;;;;;;;;;;;;;;;;
+
+max_execution_time = $(if [ "$environment" = "production" ]; then echo "60"; else echo "300"; fi)
+max_input_time = 60
+memory_limit = $PHP_MEMORY_LIMIT
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Error handling and logging ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT
+display_errors = $(if [ "$environment" = "production" ]; then echo "Off"; else echo "On"; fi)
+display_startup_errors = $(if [ "$environment" = "production" ]; then echo "Off"; else echo "On"; fi)
+log_errors = On
+log_errors_max_len = 1024
+ignore_repeated_errors = Off
+ignore_repeated_source = Off
+report_memleaks = $(if [ "$environment" = "production" ]; then echo "Off"; else echo "On"; fi)
+track_errors = $(if [ "$environment" = "production" ]; then echo "Off"; else echo "On"; fi)
+html_errors = $(if [ "$environment" = "production" ]; then echo "Off"; else echo "On"; fi)
+
+;;;;;;;;;;;;;;;;;
+; Data Handling ;
+;;;;;;;;;;;;;;;;;
+
+arg_separator.output = "&amp;"
+arg_separator.input = ";&"
+variables_order = "EGPCS"
+request_order = "GP"
+register_argc_argv = Off
+auto_globals_jit = On
+post_max_size = $PHP_POST_MAX_SIZE
+auto_prepend_file =
+auto_append_file =
+default_mimetype = "text/html"
+default_charset = "UTF-8"
+internal_encoding =
+input_encoding =
+output_encoding =
+
+;;;;;;;;;;;;;;;;;;;;;;;;;
+; Paths and Directories ;
+;;;;;;;;;;;;;;;;;;;;;;;;;
+
+doc_root =
+user_dir =
+enable_dl = Off
+cgi.fix_pathinfo=1
+file_uploads = On
+upload_max_filesize = $PHP_UPLOAD_MAX_FILESIZE
+max_file_uploads = 20
+allow_url_fopen = $(if [ "$environment" = "production" ]; then echo "Off"; else echo "On"; fi)
+allow_url_include = Off
+default_socket_timeout = 60
+
+;;;;;;;;;;;;;;;;;
+; File Uploads ;
+;;;;;;;;;;;;;;;;;
+
+upload_tmp_dir =
+
+;;;;;;;;;;;;;;;;;;
+; Fopen wrappers ;
+;;;;;;;;;;;;;;;;;;
+
+extension=gd
+extension=mbstring
+extension=mysql
+extension=pdo_mysql
+extension=zip
+extension=imap
+extension=imagick
+
+;;;;;;;;;;;;;;;;;;;
+; Module Settings ;
+;;;;;;;;;;;;;;;;;;;
+
+[CLI Server]
+cli_server.color = On
+
+[Date]
+date.timezone = UTC
+
+[Session]
+session.save_handler = files
+session.save_path = "/tmp/sessions"
+session.use_strict_mode = 1
+session.use_cookies = 1
+session.cookie_secure = $(if [ "$environment" = "production" ]; then echo "1"; else echo "0"; fi)
+session.cookie_httponly = 1
+session.cookie_samesite = $(if [ "$environment" = "production" ]; then echo '"Strict"'; else echo ""; fi)
+session.gc_maxlifetime = $(if [ "$environment" = "production" ]; then echo "7200"; else echo "1440"; fi)
+session.gc_probability = 1
+session.gc_divisor = 100
+
+[Assertion]
+zend.assertions = -1
+
+[Tidy]
+tidy.clean_output = Off
+
+[soap]
+soap.wsdl_cache_enabled=1
+soap.wsdl_cache_dir="/tmp"
+soap.wsdl_cache_ttl=86400
+soap.wsdl_cache_limit = 5
+
+[opcache]
+opcache.enable=$(if [ "$environment" = "production" ]; then echo "1"; else echo "1"; fi)
+opcache.memory_consumption=$(if [ "$environment" = "production" ]; then echo "64"; else echo "256"; fi)
+opcache.max_accelerated_files=7963
+opcache.revalidate_freq=$(if [ "$environment" = "production" ]; then echo "0"; else echo "0"; fi)
+$(if [ "$environment" = "production" ]; then
+    echo "opcache.validate_timestamps=0"
+    echo "opcache.save_comments=0"
+fi)
+EOF
+
+    print_success "Generated $environment PHP configuration at $config_file"
+}
+
 generate_caddyfile() {
     ((CURRENT_STEP++))
     show_progress $CURRENT_STEP "Generating Caddy configuration"
@@ -1160,6 +1323,7 @@ main() {
 
     # Configuration generation
     generate_env_file
+    generate_php_configs
     generate_caddyfile
     update_docker_compose
 
