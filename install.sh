@@ -215,20 +215,15 @@ select_installation_mode() {
 
 configure_docker_hub() {
     ((CURRENT_STEP++))
-    show_progress $CURRENT_STEP "Configuring Docker Hub"
+    show_progress $CURRENT_STEP "Configuring GitHub Container Registry"
 
-    print_step "🐳 Docker Hub Configuration"
+    print_step "🐳 GitHub Container Registry Configuration"
 
-    read -p "Docker Hub username [$DOCKERHUB_USERNAME]: " input
-    DOCKERHUB_USERNAME=${input:-$DOCKERHUB_USERNAME}
+    # For GHCR, we use the GitHub username from the repository
+    DOCKERHUB_USERNAME="btafoya"
 
-    if [ -z "$DOCKERHUB_USERNAME" ]; then
-        print_error "Docker Hub username is required"
-        configure_docker_hub
-        return
-    fi
-
-    print_success "Docker Hub username set to: $DOCKERHUB_USERNAME"
+    print_info "Using GitHub Container Registry: ghcr.io/$DOCKERHUB_USERNAME/nixvm"
+    print_success "Registry configured for: $DOCKERHUB_USERNAME"
 }
 
 configure_app_environment() {

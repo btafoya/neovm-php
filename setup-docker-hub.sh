@@ -22,9 +22,9 @@ if [ ! -f ".env" ]; then
     echo ""
 fi
 
-# Check if Docker Hub username is set
+# Check if GitHub Container Registry username is set
 if ! grep -q "^DOCKERHUB_USERNAME=" .env 2>/dev/null || grep -q "^DOCKERHUB_USERNAME=your_dockerhub_username" .env 2>/dev/null; then
-    echo -e "${YELLOW}⚠️  Docker Hub username not set, using default: btafoya${NC}"
+    echo -e "${YELLOW}⚠️  GitHub Container Registry username not set, using default: btafoya${NC}"
     echo "DOCKERHUB_USERNAME=btafoya" >> .env
 fi
 
@@ -47,33 +47,31 @@ fi
 echo -e "${GREEN}✅ Docker and docker-compose are available${NC}"
 
 echo ""
-echo -e "${BLUE}🐳 Testing Docker Hub connectivity...${NC}"
-
-# Test if we can pull a small test image
+echo -e "${BLUE}🐳 Testing container registry connectivity...${NC}"
 if docker pull hello-world &> /dev/null; then
-    echo -e "${GREEN}✅ Docker Hub connectivity confirmed${NC}"
+    echo -e "${GREEN}✅ Container registry connectivity confirmed${NC}"
 else
-    echo -e "${RED}❌ Cannot connect to Docker Hub${NC}"
+    echo -e "${RED}❌ Cannot connect to container registry${NC}"
     echo "   Check your internet connection and Docker configuration"
     exit 1
 fi
 
 echo ""
-echo -e "${BLUE}🔄 Pulling NixVM images from Docker Hub...${NC}"
+echo -e "${BLUE}🔄 Testing NixVM images from GitHub Container Registry...${NC}"
 
-# Pull images
+# Test images (don't pull them all to save bandwidth)
 services=("php-app" "mariadb" "caddy" "phpmyadmin")
 
 for service in "${services[@]}"; do
-    image="${DOCKERHUB_USERNAME}/nixvm:${service}-latest"
-    echo -e "${YELLOW}📥 Pulling ${image}...${NC}"
+    image="ghcr.io/${DOCKERHUB_USERNAME}/nixvm:${service}-latest"
+    echo -e "${YELLOW}🔍 Checking ${image}...${NC}"
 
     if docker pull "${image}" 2>/dev/null; then
-        echo -e "${GREEN}✅ Successfully pulled ${image}${NC}"
+        echo -e "${GREEN}✅ Successfully accessed ${image}${NC}"
     else
-        echo -e "${RED}❌ Failed to pull ${image}${NC}"
-        echo -e "${YELLOW}   This might be normal if you haven't published the images yet${NC}"
-        echo -e "${YELLOW}   You can build locally with: docker-compose -f docker-compose.hub.yml build${NC}"
+        echo -e "${YELLOW}⚠️  Cannot access ${image}${NC}"
+        echo -e "${PURPLE}   This is normal if images haven't been published yet${NC}"
+        echo -e "${PURPLE}   You can build locally with: docker-compose -f docker-compose.hub.yml build${NC}"
     fi
 done
 
@@ -91,6 +89,6 @@ echo "  • Main app: http://localhost"
 echo "  • phpMyAdmin: http://localhost:8081"
 echo "  • Standalone Caddy: http://localhost:8080"
 echo ""
-echo -e "${YELLOW}Note: If images failed to pull, they haven't been published yet.${NC}"
-echo -e "${YELLOW}      The images will be published to: https://hub.docker.com/r/btafoya/nixvm${NC}"
+echo -e "${YELLOW}Note: If images failed to access, they haven't been published yet.${NC}"
+echo -e "${YELLOW}      The images will be published to: https://github.com/btafoya/nixvm/pkgs/container/nixvm${NC}"
 echo -e "${YELLOW}      Push to main branch or create a tag to trigger automated publishing.${NC}"

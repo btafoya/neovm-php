@@ -97,10 +97,10 @@ The `install.sh` script provides a comprehensive interactive setup experience:
 
 | Service | Latest Tag | Version Tags | Description |
 |---------|------------|--------------|-------------|
-| **PHP App + Caddy** | `php-app-latest` | `php-app-v1.0.0` | Self-contained PHP app with Caddy routing |
-| **MariaDB** | `mariadb-latest` | `mariadb-v1.0.0` | Database server with NixVM config |
-| **Caddy** | `caddy-latest` | `caddy-v1.0.0` | Standalone web server |
-| **phpMyAdmin** | `phpmyadmin-latest` | `phpmyadmin-v1.0.0` | Database management interface |
+| **PHP App + Caddy** | `ghcr.io/btafoya/nixvm:php-app-latest` | `ghcr.io/btafoya/nixvm:php-app-v1.0.0` | Self-contained PHP app with Caddy routing |
+| **MariaDB** | `ghcr.io/btafoya/nixvm:mariadb-latest` | `ghcr.io/btafoya/nixvm:mariadb-v1.0.0` | Database server with NixVM config |
+| **Caddy** | `ghcr.io/btafoya/nixvm:caddy-latest` | `ghcr.io/btafoya/nixvm:caddy-v1.0.0` | Standalone web server |
+| **phpMyAdmin** | `ghcr.io/btafoya/nixvm:phpmyadmin-latest` | `ghcr.io/btafoya/nixvm:phpmyadmin-v1.0.0` | Database management interface |
 
 ### Quick Start with Docker Hub Images
 
@@ -121,26 +121,26 @@ docker-compose -f docker-compose.hub.yml up -d
 ### Pull Individual Images
 
 ```bash
-# Pull NixVM images for user btafoya
-docker pull btafoya/nixvm:php-app-latest
-docker pull btafoya/nixvm:mariadb-latest
-docker pull btafoya/nixvm:caddy-latest
-docker pull btafoya/nixvm:phpmyadmin-latest
+# Pull NixVM images from GitHub Container Registry
+docker pull ghcr.io/btafoya/nixvm:php-app-latest
+docker pull ghcr.io/btafoya/nixvm:mariadb-latest
+docker pull ghcr.io/btafoya/nixvm:caddy-latest
+docker pull ghcr.io/btafoya/nixvm:phpmyadmin-latest
 ```
 
 ### Run Individual Services
 
 ```bash
 # PHP Application with built-in Caddy
-docker run -p 80:80 -p 443:443 btafoya/nixvm:php-app-latest
+docker run -p 80:80 -p 443:443 ghcr.io/btafoya/nixvm:php-app-latest
 
 # Database only
-docker run -p 3306:3306 -e MYSQL_ROOT_PASSWORD=secret btafoya/nixvm:mariadb-latest
+docker run -p 3306:3306 -e MYSQL_ROOT_PASSWORD=secret ghcr.io/btafoya/nixvm:mariadb-latest
 
 # phpMyAdmin (link to database)
 docker run -p 8080:80 \
   -e PMA_HOST=host.docker.internal \
-  btafoya/nixvm:phpmyadmin-latest
+  ghcr.io/btafoya/nixvm:phpmyadmin-latest
 ```
 
 ## 🔄 NixOS-Based Architecture
@@ -168,7 +168,7 @@ docker run yourusername/nixvm:php-app-latest  # Uses same flake.nix
 
 ### Automated Publishing
 
-Images are automatically built and published to `btafoya/nixvm` via GitHub Actions:
+Images are automatically built and published to `ghcr.io/btafoya/nixvm` via GitHub Actions:
 
 - **Push to `main`**: Publishes `latest` tags
 - **Git Tags (`v1.0.0`)**: Publishes versioned tags
@@ -377,7 +377,7 @@ SSL_EMAIL=admin@yourdomain.com
 ```yaml
 services:
   app:
-    image: btafoya/nixvm:php-app-v1.0.0  # Use versioned tags
+    image: ghcr.io/btafoya/nixvm:php-app-v1.0.0  # Use versioned tags
     environment:
       - APP_ENV=production
     secrets:
