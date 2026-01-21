@@ -1,6 +1,62 @@
 # NixVM PHP 8.3 Development Environment
 
-A complete PHP 8.3 development environment with MariaDB and Caddy, built using Nix and Docker.
+[![Build Status](https://github.com/btafoya/nixvm/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/btafoya/nixvm/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docker Images](https://img.shields.io/badge/Docker-GHCR-blue.svg)](https://github.com/btafoya/nixvm/pkgs/container/nixvm)
+[![PHP Version](https://img.shields.io/badge/PHP-8.3-blue.svg)](https://www.php.net/)
+[![Nix](https://img.shields.io/badge/Nix-Enabled-5277C3.svg)](https://nixos.org/)
+
+[![GitHub stars](https://img.shields.io/github/stars/btafoya/nixvm.svg)](https://github.com/btafoya/nixvm/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/btafoya/nixvm.svg)](https://github.com/btafoya/nixvm/network)
+[![GitHub issues](https://img.shields.io/github/issues/btafoya/nixvm.svg)](https://github.com/btafoya/nixvm/issues)
+
+<p align="center">
+  <img src="https://img.shields.io/badge/PHP-8.3-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.3"/>
+  <img src="https://img.shields.io/badge/MariaDB-10.11-003545?style=for-the-badge&logo=mariadb&logoColor=white" alt="MariaDB 10.11"/>
+  <img src="https://img.shields.io/badge/Caddy-2.0-1F88C7?style=for-the-badge&logo=caddy&logoColor=white" alt="Caddy 2.0"/>
+  <img src="https://img.shields.io/badge/NixOS-Enabled-5277C3?style=for-the-badge&logo=nixos&logoColor=white" alt="NixOS"/>
+  <img src="https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
+</p>
+
+A complete PHP 8.3 development environment with MariaDB and Caddy, built using Nix for reproducible builds and Docker for containerization.
+
+## 📦 Container Images
+
+[![Docker Pulls](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2Fbtafoya%2Fnixvm%2Fpackages&query=%24.total_count&label=Docker%20Pulls&color=blue&logo=github)](https://github.com/btafoya/nixvm/pkgs/container/nixvm)
+[![Latest Build](https://img.shields.io/github/actions/workflow/status/btafoya/nixvm/docker-publish.yml?label=latest%20build)](https://github.com/btafoya/nixvm/actions/workflows/docker-publish.yml)
+
+### Available Images
+- `ghcr.io/btafoya/nixvm:php-app-latest` - PHP 8.3 + Caddy application server
+- `ghcr.io/btafoya/nixvm:mariadb-latest` - MariaDB 10.11 database
+- `ghcr.io/btafoya/nixvm:caddy-latest` - Standalone Caddy web server
+- `ghcr.io/btafoya/nixvm:phpmyadmin-latest` - phpMyAdmin database manager
+
+## 🛠️ Tech Stack & Features
+
+[![Nix Flake](https://img.shields.io/badge/Nix-Flake-5277C3.svg)](https://nixos.org/)
+[![GitHub Actions](https://img.shields.io/badge/CI-CD-GitHub%20Actions-2088FF.svg)](https://github.com/features/actions)
+[![GitHub Container Registry](https://img.shields.io/badge/Registry-GHCR-2496ED.svg)](https://ghcr.io)
+[![Interactive Install](https://img.shields.io/badge/Install-Interactive-FF6B35.svg)](./install.sh)
+
+### Key Features
+- 🔒 **Reproducible Builds** - Nix ensures identical environments
+- 🐳 **Container Ready** - Pre-built Docker images on GHCR
+- ⚡ **Fast Setup** - Interactive installer configures everything
+- 🔧 **Development Focused** - Xdebug, error reporting, hot reload
+- 🔄 **Production Ready** - Environment-specific configurations
+- 📊 **Health Monitoring** - Built-in health checks and logging
+
+## 🤝 Contributing & Community
+
+[![Contributors](https://img.shields.io/github/contributors/btafoya/nixvm.svg)](https://github.com/btafoya/nixvm/graphs/contributors)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/btafoya/nixvm.svg)](https://github.com/btafoya/nixvm/commits/main)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/btafoya/nixvm/blob/main/CONTRIBUTING.md)
+
+### How to Contribute
+- 🐛 **Report Issues** - Found a bug? [Open an issue](https://github.com/btafoya/nixvm/issues)
+- 💡 **Suggest Features** - Have an idea? [Start a discussion](https://github.com/btafoya/nixvm/discussions)
+- 🔧 **Contribute Code** - See our [contributing guide](./CONTRIBUTING.md)
+- 📖 **Improve Docs** - Help make documentation better
 
 ## 🚀 Quick Start
 
@@ -401,5 +457,43 @@ This environment is designed to be easily extensible. Add new services to `docke
 - [PHP 8.3 Documentation](https://www.php.net/docs.php)
 - [Caddy Documentation](https://caddyserver.com/docs/)
 - [MariaDB Documentation](https://mariadb.com/kb/en/documentation/)
-- [Nix Documentation](https://nixos.org/learn.html)</content>
+- [Nix Documentation](https://nixos.org/learn.html)
+
+---
+
+## 🙏 Acknowledgments
+
+Built with ❤️ using cutting-edge open source technologies.
+
+[![Powered by Nix](https://img.shields.io/badge/Powered%20by-Nix-5277C3.svg)](https://nixos.org/)
+[![Made with PHP](https://img.shields.io/badge/Made%20with-PHP-777BB4.svg)](https://php.net/)
+[![Containerized with Docker](https://img.shields.io/badge/Containerized%20with-Docker-2496ED.svg)](https://docker.com/)
+
+### Technologies Used
+<p align="center">
+  <a href="https://nixos.org/"><img src="https://img.shields.io/badge/NixOS-5277C3?style=flat-square&logo=nixos&logoColor=white" alt="NixOS"/></a>
+  <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-777BB4?style=flat-square&logo=php&logoColor=white" alt="PHP"/></a>
+  <a href="https://mariadb.com/"><img src="https://img.shields.io/badge/MariaDB-003545?style=flat-square&logo=mariadb&logoColor=white" alt="MariaDB"/></a>
+  <a href="https://caddyserver.com/"><img src="https://img.shields.io/badge/Caddy-1F88C7?style=flat-square&logo=caddy&logoColor=white" alt="Caddy"/></a>
+  <a href="https://www.docker.com/"><img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker"/></a>
+  <a href="https://github.com/features/actions"><img src="https://img.shields.io/badge/GitHub_Actions-2088FF?style=flat-square&logo=github-actions&logoColor=white" alt="GitHub Actions"/></a>
+</p>
+
+### Repository Links
+<p align="center">
+  <a href="https://github.com/btafoya/nixvm"><img src="https://img.shields.io/badge/GitHub-Repository-181717?style=flat-square&logo=github&logoColor=white" alt="GitHub Repository"/></a>
+  <a href="https://github.com/btafoya/nixvm/issues"><img src="https://img.shields.io/badge/Issues-Report_Bug-red?style=flat-square&logo=github&logoColor=white" alt="Report Issues"/></a>
+  <a href="https://github.com/btafoya/nixvm/discussions"><img src="https://img.shields.io/badge/Discussions-Q&A-blue?style=flat-square&logo=github&logoColor=white" alt="Discussions"/></a>
+  <a href="https://github.com/btafoya/nixvm/pkgs/container/nixvm"><img src="https://img.shields.io/badge/Container_Registry-GHCR-2496ED?style=flat-square&logo=github&logoColor=white" alt="Container Registry"/></a>
+</p>
+
+---
+
+<div align="center">
+
+**🚀 Happy coding with NixVM! 🚀**
+
+*Built for developers, by developers*
+
+</div></content>
 <parameter name="filePath">README.md
