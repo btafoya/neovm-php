@@ -293,11 +293,11 @@ check_requirements() {
         echo ""
     fi
 
-    # Check Nix installation
+    # Check Nix installation (warning only, don't exit)
     if ! command -v nix &> /dev/null; then
-        print_error "Nix is not installed!"
-        print_info "Please install Nix first: https://nixos.org/download/"
-        exit 1
+        print_warning "Nix is not installed!"
+        print_info "Some features may require Nix. Install: https://nixos.org/download/"
+        echo ""
     fi
 
     print_success "System requirements check passed"
