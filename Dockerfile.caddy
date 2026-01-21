@@ -10,8 +10,8 @@ COPY docker/caddy/Caddyfile /etc/caddy/Caddyfile
 # Copy static files if any
 COPY public/ /var/www/html/
 
-# Set proper permissions
-RUN chown -R caddy:caddy /etc/caddy /var/log/caddy /var/www/html
+# Set proper permissions (caddy user exists in base image)
+RUN chown -R caddy:caddy /etc/caddy /var/log/caddy /var/www/html || true
 
 # Environment variables
 ENV XDG_CONFIG_HOME=/config

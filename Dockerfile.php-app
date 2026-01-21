@@ -46,10 +46,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 # Copy composer files first for better caching
-COPY composer.json composer.lock ./
+COPY composer.json ./
+RUN if [ -s composer.lock ]; then echo "Using existing composer.lock"; else rm -f composer.lock; fi
 
 # Install PHP dependencies (production)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
 
 # Copy application code
 COPY src/ ./src/
