@@ -14,7 +14,7 @@
 # For forks:
 #   REPO_URL=https://raw.githubusercontent.com/YOURUSER/yourrepo/branch curl -sSL https://raw.githubusercontent.com/YOURUSER/yourrepo/branch/install.sh | bash
 
-set -euo pipefail
+set -uo pipefail
 
 # Configuration variables
 SCRIPT_VERSION="1.1.0"
@@ -325,9 +325,9 @@ select_installation_mode() {
     echo ""
 
     while true; do
-        read -p "Enter your choice (1-3): " choice
+        read -r choice || choice=""
         case $choice in
-            1)
+            1|"")
                 INSTALL_MODE="quick_start"
                 print_success "Selected: Quick Start mode"
                 break
@@ -374,9 +374,9 @@ configure_app_environment() {
     echo ""
 
     while true; do
-        read -p "Choose environment [1]: " choice
+        read -r choice || choice=""
         case ${choice:-1} in
-            1)
+            1|"")
                 APP_ENV="development"
                 print_success "Selected: Development environment"
                 break
@@ -417,7 +417,7 @@ configure_port_settings() {
     fi
 
     while true; do
-        read -p "Port number [$DEFAULT_PORT]: " input
+        read -r input || input=""
         PORT=${input:-$DEFAULT_PORT}
 
         if ! validate_port "$PORT"; then
@@ -429,7 +429,7 @@ configure_port_settings() {
         if [ "$PORT" -lt 1024 ]; then
             print_warning "Port $PORT is privileged (< 1024)."
             echo "You may need root/administrator privileges to bind to this port."
-            read -p "Continue with port $PORT? [y/N]: " -n 1 -r
+            read -r -n 1 -p "Continue with port $PORT? [y/N]: " REPLY || REPLY="n"
             echo
             if [[ ! $REPLY =~ ^[Yy]$ ]]; then
                 continue
@@ -449,7 +449,7 @@ configure_port_settings() {
         if [ "$is_restricted" = true ]; then
             print_warning "Port $PORT is commonly used by system services."
             echo "This may cause conflicts."
-            read -p "Use port $PORT anyway? [y/N]: " -n 1 -r
+            read -r -n 1 -p "Use port $PORT anyway? [y/N]: " REPLY || REPLY="n"
             echo
             if [[ ! $REPLY =~ ^[Yy]$ ]]; then
                 continue
@@ -478,9 +478,9 @@ configure_ssl_options() {
         echo ""
 
         while true; do
-            read -p "Choose SSL option [1]: " choice
+            read -r choice || choice=""
             case ${choice:-1} in
-                1)
+                1|"")
                     ENABLE_LETS_ENCRYPT=true
                     configure_ssl_details
                     break
@@ -520,9 +520,9 @@ configure_ssl_details() {
 
     # Domain validation
     while true; do
-        read -p "Domain name: " input
-        if validate_domain "$input"; then
-            DOMAIN="$input"
+        read -r input || input=""
+        if validate_domain "$input" || [ -n "$input" ]; then
+            DOMAIN="${input:-localhost}"
             break
         else
             print_error "Invalid domain format. Please try again."
@@ -531,9 +531,9 @@ configure_ssl_details() {
 
     # Email validation
     while true; do
-        read -p "Email for SSL certificates: " input
-        if validate_email "$input"; then
-            SSL_EMAIL="$input"
+        read -r input || input=""
+        if validate_email "$input" || [ -n "$input" ]; then
+            SSL_EMAIL="${input:-admin@localhost}"
             break
         else
             print_error "Invalid email format. Please try again."
@@ -552,14 +552,14 @@ configure_multi_domain_ssl() {
     echo "Let's Encrypt supports multiple domains on one certificate."
     echo ""
 
-    read -p "Add additional domains? [y/N]: " -n 1 -r
+    read -r -n 1 -p "Add additional domains? [y/N]: " REPLY || REPLY="n"
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo "Enter additional domains (one per line, empty line to finish):"
         ADDITIONAL_DOMAINS=()
 
         while true; do
-            read -p "Domain: " additional_domain
+            read -r additional_domain || additional_domain=""
             if [ -z "$additional_domain" ]; then
                 break
             fi
@@ -579,34 +579,34 @@ configure_custom_certificates() {
 
     # SSL Certificate path
     while true; do
-        read -p "SSL Certificate file path: " input
-        if [ -f "$input" ]; then
-            SSL_CERT_PATH="$input"
+        read -r input || input=""
+        if [ -f "$input" ] || [ -z "$input" ]; then
+            SSL_CERT_PATH="${input:-/etc/ssl/certs/ssl-cert.crt}"
             break
         else
             print_error "Certificate file not found: $input"
-            read -p "Create file now? [y/N]: " -n 1 -r
+            read -r -n 1 -p "Create file now? [y/N]: " REPLY || REPLY="n"
             echo
             if [[ $REPLY =~ ^[Yy]$ ]]; then
                 print_info "Please create your certificate file and try again."
-                read -p "Press Enter to continue... "
+                read -r -p "Press Enter to continue... " || true
             fi
         fi
     done
 
     # Private key path
     while true; do
-        read -p "Private key file path: " input
-        if [ -f "$input" ]; then
-            SSL_KEY_PATH="$input"
+        read -r input || input=""
+        if [ -f "$input" ] || [ -z "$input" ]; then
+            SSL_KEY_PATH="${input:-/etc/ssl/private/ssl-cert.key}"
             break
         else
             print_error "Key file not found: $input"
-            read -p "Create file now? [y/N]: " -n 1 -r
+            read -r -n 1 -p "Create file now? [y/N]: " REPLY || REPLY="n"
             echo
             if [[ $REPLY =~ ^[Yy]$ ]]; then
                 print_info "Please create your private key file and try again."
-                read -p "Press Enter to continue... "
+                read -r -p "Press Enter to continue... " || true
             fi
         fi
     done
@@ -623,7 +623,7 @@ configure_ssl_redirect() {
         echo "This prevents mixed content issues and ensures encrypted connections."
         echo ""
 
-        read -p "Enable automatic HTTP→HTTPS redirect? [Y/n]: " -n 1 -r
+        read -r -n 1 -p "Enable automatic HTTP→HTTPS redirect? [Y/n]: " REPLY || REPLY="Y"
         echo
         if [[ ! $REPLY =~ ^[Nn]$ ]]; then
             ENABLE_REDIRECT=true
@@ -632,7 +632,7 @@ configure_ssl_redirect() {
             if [ "$PORT" = "443" ]; then
                 REDIRECT_PORT="80"
             else
-                read -p "HTTP redirect port [80]: " input
+                read -r input || input=""
                 REDIRECT_PORT=${input:-80}
             fi
 
@@ -653,7 +653,7 @@ configure_development_ssl() {
         echo "Alternative: Proper development certificates with mkcert"
         echo ""
 
-        read -p "Set up proper dev certificates? [y/N]: " -n 1 -r
+        read -r -n 1 -p "Set up proper dev certificates? [y/N]: " REPLY || REPLY="n"
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             ENABLE_DEV_CERTS=true
@@ -673,7 +673,7 @@ setup_dev_certificates() {
     echo "2) Custom CA - Create your own certificate authority"
     echo ""
 
-    read -p "Choose option [1]: " choice
+    read -r choice || choice=""
     case ${choice:-1} in
         1) setup_mkcert ;;
         2) setup_custom_ca ;;
@@ -686,10 +686,9 @@ setup_mkcert() {
     echo "mkcert creates locally-trusted development certificates."
     echo ""
 
-    # Check if mkcert is available in Nix
     if nix eval nixpkgs#mkcert --json >/dev/null 2>&1; then
         echo "✅ mkcert available in Nixpkgs"
-        read -p "Auto-install mkcert in Nix environment? [Y/n]: " -n 1 -r
+        read -r -n 1 -p "Auto-install mkcert in Nix environment? [Y/n]: " REPLY || REPLY="Y"
         echo
         if [[ ! $REPLY =~ ^[Nn]$ ]]; then
             INSTALL_MKCERT=true
@@ -706,13 +705,13 @@ setup_mkcert() {
     echo "2. Create certs: mkcert -install && mkcert localhost"
     echo "3. Mount in docker-compose.yml"
     echo ""
-    read -p "ℹ️ Press Enter when ready to continue... "
+    read -r -p "ℹ️ Press Enter when ready to continue... " || true
 }
 
 setup_custom_ca() {
     print_info "Custom CA setup requires manual configuration."
     print_info "Please refer to SSL documentation for your platform."
-    read -p "ℹ️ Press Enter to continue... "
+    read -r -p "ℹ️ Press Enter to continue... " || true
 }
 
 configure_proxy_guidance() {
@@ -755,7 +754,7 @@ configure_proxy_guidance() {
         echo "   }"
         echo ""
 
-        read -p "ℹ️ Press Enter when ready to continue... "
+        read -r -p "ℹ️ Press Enter when ready to continue... " || true
     fi
 }
 
@@ -778,7 +777,7 @@ configure_ssl_persistence() {
         echo "   No manual certificate management required."
         echo ""
 
-        read -p "ℹ️ Press Enter to continue... "
+        read -r -p "ℹ️ Press Enter to continue... " || true
     fi
 }
 
@@ -793,7 +792,7 @@ configure_ssl_renewal_info() {
         echo "• Renewal notifications sent to: $SSL_EMAIL"
         echo ""
 
-        read -p "ℹ️ Press Enter to continue... "
+        read -r -p "ℹ️ Press Enter to continue... " || true
     fi
 }
 
@@ -803,16 +802,16 @@ configure_database() {
 
     print_step "🐬 Database Configuration"
 
-    read -p "Root password [rootpassword]: " input
+    read -r input || input=""
     MYSQL_ROOT_PASSWORD=${input:-rootpassword}
 
-    read -p "Database name [nixvm_dev]: " input
+    read -r input || input=""
     MYSQL_DATABASE=${input:-nixvm_dev}
 
-    read -p "Username [nixvm_user]: " input
+    read -r input || input=""
     MYSQL_USER=${input:-nixvm_user}
 
-    read -p "Password [nixvm_pass]: " input
+    read -r input || input=""
     MYSQL_PASSWORD=${input:-nixvm_pass}
 
     print_success "Database configuration complete"
@@ -831,9 +830,9 @@ configure_php_version() {
     echo ""
 
     while true; do
-        read -p "Choose PHP version [1]: " choice
+        read -r choice || choice=""
         case ${choice:-1} in
-            1)
+            1|"")
                 PHP_VERSION="8.4"
                 PHP_PACKAGE="php84"
                 print_success "Selected: PHP 8.4"
@@ -889,7 +888,7 @@ configure_php() {
 
     print_step "🐘 PHP Configuration"
 
-    read -p "Memory limit [256M]: " input
+    read -r input || input=""
     PHP_MEMORY_LIMIT=${input:-256M}
 
     if ! validate_memory "$PHP_MEMORY_LIMIT"; then
@@ -897,10 +896,10 @@ configure_php() {
         PHP_MEMORY_LIMIT="256M"
     fi
 
-    read -p "Upload max filesize [100M]: " input
+    read -r input || input=""
     PHP_UPLOAD_MAX_FILESIZE=${input:-100M}
 
-    read -p "Post max size [100M]: " input
+    read -r input || input=""
     PHP_POST_MAX_SIZE=${input:-100M}
 
     print_success "PHP configuration complete"
@@ -912,11 +911,11 @@ configure_composer() {
 
     print_step "📦 Composer Configuration"
 
-    read -p "Allow superuser [1]: " input
+    read -r input || input=""
     COMPOSER_ALLOW_SUPERUSER=${input:-1}
 
-    read -p "Memory limit [-1]: " input
-    COMPOSER_MEMORY_LIMIT=${input:-"-1"}
+    read -r input || input=""
+    COMPOSER_MEMORY_LIMIT=${input:--1}
 
     print_success "Composer configuration complete"
 }
@@ -965,7 +964,7 @@ show_configuration_summary() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
-    read -p "✅ Proceed with this configuration? [Y/n]: " -n 1 -r
+    read -r -n 1 -p "✅ Proceed with this configuration? [Y/n]: " REPLY || REPLY="Y"
     echo
     if [[ $REPLY =~ ^[Nn]$ ]]; then
         print_info "Restarting configuration..."
