@@ -162,6 +162,82 @@ composer fix
 composer dev:serve
 ```
 
+## 🛠️ Available CLI Tools
+
+The development environment includes a comprehensive set of CLI tools for development:
+
+### **Version Control & GitHub**
+```bash
+git          # Git version control
+gh           # GitHub CLI for pull requests, issues, releases
+```
+
+### **File & Archive Management**
+```bash
+zip          # Create ZIP archives
+unzip        # Extract ZIP archives
+tar          # Create/extract TAR archives
+gzip         # Compress/decompress with gzip
+```
+
+### **Text Processing & Search**
+```bash
+sed          # Stream editor for text manipulation
+awk          # Pattern scanning and processing language
+grep         # Search text using regular expressions
+ripgrep      # Modern, fast grep replacement (rg command)
+```
+
+### **File System Utilities**
+```bash
+find         # Search for files in directory trees
+fd           # Modern, fast find replacement (fdfind command)
+tree         # Display directory tree structure
+bat          # Modern cat with syntax highlighting
+```
+
+### **Data Processing**
+```bash
+jq           # Command-line JSON processor
+yq           # Command-line YAML processor
+make         # GNU Make for build automation
+```
+
+### **System Monitoring**
+```bash
+htop         # Interactive process viewer
+curl         # Transfer data from servers
+wget         # Download files from web
+```
+
+### **Examples**
+```bash
+# Search for PHP files containing "TODO"
+grep -r "TODO" --include="*.php" .
+
+# Or use ripgrep for faster searching
+rg "TODO" -t php
+
+# Find all PHP files modified in last day
+find . -name "*.php" -mtime -1
+
+# Or use fd for modern file finding
+fd -e php --changed-within 1day
+
+# Pretty print JSON files
+jq . config.json
+
+# Extract archives
+tar -xzf archive.tar.gz
+unzip archive.zip
+
+# Create GitHub pull request
+gh pr create --title "My changes" --body "Description"
+
+# Monitor system resources
+htop
+```
+
 ## 📁 Project Structure
 
 ```

@@ -71,6 +71,20 @@
             wget
             htop
             tree
+
+            # CLI development tools
+            zip
+            unzip
+            gnutar
+            gzip
+            gnumake
+            gh
+            gnused
+            gawk
+            ripgrep
+            fd
+            bat
+            jq
           ];
 
           shellHook = ''
@@ -114,5 +128,4 @@
           };
         };
       });
-}</content>
-<parameter name="filePath">flake.nix
+}

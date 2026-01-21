@@ -63,6 +63,21 @@ pkgs.mkShell {
     curl
     wget
     htop
+
+    # CLI development tools
+    zip
+    unzip
+    gnutar
+    gzip
+    gnumake
+    gh        # GitHub CLI
+    gnused    # sed
+    gawk      # awk
+    ripgrep   # Modern grep replacement
+    fd        # Modern find replacement
+    bat       # Modern cat with syntax highlighting
+    jq        # JSON processor
+    yq        # YAML processor
   ];
 
   shellHook = ''
