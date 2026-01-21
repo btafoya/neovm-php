@@ -187,3 +187,4 @@ jobs:
           echo "Cleaning up old workflow caches..."
           # Remove caches older than 7 days to prevent accumulation
           # This helps maintain repository size limits
+          echo "Cache cleanup completed"
