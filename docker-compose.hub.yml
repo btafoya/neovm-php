@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # PHP Application with Caddy Routing (NixOS-based)
   app:
-    image: ghcr.io/${DOCKERHUB_USERNAME}/nixvm:php-app-latest
+    image: ghcr.io/${DOCKERHUB_USERNAME}/neovm-php:php-app-latest
     container_name: nixvm_php_app
     restart: unless-stopped
     ports:
@@ -34,7 +34,7 @@ services:
 
   # MariaDB Database (NixOS-based)
   db:
-    image: ghcr.io/${DOCKERHUB_USERNAME}/nixvm:mariadb-latest
+    image: ghcr.io/${DOCKERHUB_USERNAME}/neovm-php:mariadb-latest
     container_name: nixvm_mariadb
     restart: unless-stopped
     environment:
@@ -57,7 +57,7 @@ services:
 
   # Standalone Caddy Web Server (NixOS-based)
   caddy:
-    image: ghcr.io/${DOCKERHUB_USERNAME}/nixvm:caddy-latest
+    image: ghcr.io/${DOCKERHUB_USERNAME}/neovm-php:caddy-latest
     container_name: nixvm_caddy_standalone
     restart: unless-stopped
     ports:
@@ -84,7 +84,7 @@ services:
 
   # phpMyAdmin (NixOS-based)
   phpmyadmin:
-    image: ghcr.io/${DOCKERHUB_USERNAME}/nixvm:phpmyadmin-latest
+    image: ghcr.io/${DOCKERHUB_USERNAME}/neovm-php:phpmyadmin-latest
     container_name: nixvm_phpmyadmin
     restart: unless-stopped
     ports:

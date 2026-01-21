@@ -2,7 +2,7 @@
 
 [![CI/CD](https://github.com/btafoya/neovm-php/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/btafoya/neovm-php/actions/workflows/docker-publish.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Docker Images](https://img.shields.io/badge/Docker-GHCR-blue.svg)](https://github.com/btafoya/neovm-php/pkgs/container/nixvm)
+[![Docker Images](https://img.shields.io/badge/Docker-GHCR-blue.svg)](https://github.com/btafoya/neovm-php/pkgs/container/neovm-php)
 [![PHP Version](https://img.shields.io/badge/PHP-8.3-blue.svg)](https://www.php.net/)
 [![Nix](https://img.shields.io/badge/Nix-Enabled-5277C3.svg)](https://nixos.org/)
 
@@ -22,14 +22,14 @@ A complete PHP 8.3 development environment with MariaDB and Caddy, built using N
 
 ## 📦 Container Images
 
-[![Container Registry](https://img.shields.io/badge/Container-GHCR-2496ED.svg)](https://github.com/btafoya/neovm-php/pkgs/container/nixvm)
+[![Container Registry](https://img.shields.io/badge/Container-GHCR-2496ED.svg)](https://github.com/btafoya/neovm-php/pkgs/container/neovm-php)
 [![CI Status](https://img.shields.io/github/actions/workflow/status/btafoya/neovm-php/docker-publish.yml)](https://github.com/btafoya/neovm-php/actions/workflows/docker-publish.yml)
 
 ### Available Images
-- `ghcr.io/btafoya/nixvm:php-app-latest` - PHP 8.3 + Caddy application server
-- `ghcr.io/btafoya/nixvm:mariadb-latest` - MariaDB 10.11 database
-- `ghcr.io/btafoya/nixvm:caddy-latest` - Standalone Caddy web server
-- `ghcr.io/btafoya/nixvm:phpmyadmin-latest` - phpMyAdmin database manager
+- `ghcr.io/btafoya/neovm-php:php-app-latest` - PHP 8.3 + Caddy application server
+- `ghcr.io/btafoya/neovm-php:mariadb-latest` - MariaDB 10.11 database
+- `ghcr.io/btafoya/neovm-php:caddy-latest` - Standalone Caddy web server
+- `ghcr.io/btafoya/neovm-php:phpmyadmin-latest` - phpMyAdmin database manager
 
 ## 🛠️ Tech Stack & Features
 
@@ -153,10 +153,10 @@ The `install.sh` script provides a comprehensive interactive setup experience:
 
 | Service | Latest Tag | Version Tags | Description |
 |---------|------------|--------------|-------------|
-| **PHP App + Caddy** | `ghcr.io/btafoya/nixvm:php-app-latest` | `ghcr.io/btafoya/nixvm:php-app-v1.0.0` | Self-contained PHP app with Caddy routing |
-| **MariaDB** | `ghcr.io/btafoya/nixvm:mariadb-latest` | `ghcr.io/btafoya/nixvm:mariadb-v1.0.0` | Database server with NixVM config |
-| **Caddy** | `ghcr.io/btafoya/nixvm:caddy-latest` | `ghcr.io/btafoya/nixvm:caddy-v1.0.0` | Standalone web server |
-| **phpMyAdmin** | `ghcr.io/btafoya/nixvm:phpmyadmin-latest` | `ghcr.io/btafoya/nixvm:phpmyadmin-v1.0.0` | Database management interface |
+| **PHP App + Caddy** | `ghcr.io/btafoya/neovm-php:php-app-latest` | `ghcr.io/btafoya/neovm-php:php-app-v1.0.0` | Self-contained PHP app with Caddy routing |
+| **MariaDB** | `ghcr.io/btafoya/neovm-php:mariadb-latest` | `ghcr.io/btafoya/neovm-php:mariadb-v1.0.0` | Database server with NixVM config |
+| **Caddy** | `ghcr.io/btafoya/neovm-php:caddy-latest` | `ghcr.io/btafoya/neovm-php:caddy-v1.0.0` | Standalone web server |
+| **phpMyAdmin** | `ghcr.io/btafoya/neovm-php:phpmyadmin-latest` | `ghcr.io/btafoya/neovm-php:phpmyadmin-v1.0.0` | Database management interface |
 
 ### Quick Start with Docker Hub Images
 
@@ -178,25 +178,25 @@ docker-compose -f docker-compose.hub.yml up -d
 
 ```bash
 # Pull NixVM images from GitHub Container Registry
-docker pull ghcr.io/btafoya/nixvm:php-app-latest
-docker pull ghcr.io/btafoya/nixvm:mariadb-latest
-docker pull ghcr.io/btafoya/nixvm:caddy-latest
-docker pull ghcr.io/btafoya/nixvm:phpmyadmin-latest
+docker pull ghcr.io/btafoya/neovm-php:php-app-latest
+docker pull ghcr.io/btafoya/neovm-php:mariadb-latest
+docker pull ghcr.io/btafoya/neovm-php:caddy-latest
+docker pull ghcr.io/btafoya/neovm-php:phpmyadmin-latest
 ```
 
 ### Run Individual Services
 
 ```bash
 # PHP Application with built-in Caddy
-docker run -p 80:80 -p 443:443 ghcr.io/btafoya/nixvm:php-app-latest
+docker run -p 80:80 -p 443:443 ghcr.io/btafoya/neovm-php:php-app-latest
 
 # Database only
-docker run -p 3306:3306 -e MYSQL_ROOT_PASSWORD=secret ghcr.io/btafoya/nixvm:mariadb-latest
+docker run -p 3306:3306 -e MYSQL_ROOT_PASSWORD=secret ghcr.io/btafoya/neovm-php:mariadb-latest
 
 # phpMyAdmin (link to database)
 docker run -p 8080:80 \
   -e PMA_HOST=host.docker.internal \
-  ghcr.io/btafoya/nixvm:phpmyadmin-latest
+  ghcr.io/btafoya/neovm-php:phpmyadmin-latest
 ```
 
 ## 🔄 NixOS-Based Architecture
@@ -224,7 +224,7 @@ docker run yourusername/nixvm:php-app-latest  # Uses same flake.nix
 
 ### Automated Publishing
 
-Images are automatically built and published to `ghcr.io/btafoya/nixvm` via GitHub Actions:
+Images are automatically built and published to `ghcr.io/btafoya/neovm-php` via GitHub Actions:
 
 - **Push to `main`**: Publishes `latest` tags
 - **Git Tags (`v1.0.0`)**: Publishes versioned tags
@@ -433,7 +433,7 @@ SSL_EMAIL=admin@yourdomain.com
 ```yaml
 services:
   app:
-    image: ghcr.io/btafoya/nixvm:php-app-v1.0.0  # Use versioned tags
+    image: ghcr.io/btafoya/neovm-php:php-app-v1.0.0  # Use versioned tags
     environment:
       - APP_ENV=production
     secrets:
@@ -484,7 +484,7 @@ Built with ❤️ using cutting-edge open source technologies.
   <a href="https://github.com/btafoya/neovm-php"><img src="https://img.shields.io/badge/GitHub-Repository-181717?style=flat-square&logo=github&logoColor=white" alt="GitHub Repository"/></a>
   <a href="https://github.com/btafoya/neovm-php/issues"><img src="https://img.shields.io/badge/Issues-Report_Bug-red?style=flat-square&logo=github&logoColor=white" alt="Report Issues"/></a>
   <a href="https://github.com/btafoya/neovm-php/discussions"><img src="https://img.shields.io/badge/Discussions-Q&A-blue?style=flat-square&logo=github&logoColor=white" alt="Discussions"/></a>
-  <a href="https://github.com/btafoya/neovm-php/pkgs/container/nixvm"><img src="https://img.shields.io/badge/Container_Registry-GHCR-2496ED?style=flat-square&logo=github&logoColor=white" alt="Container Registry"/></a>
+  <a href="https://github.com/btafoya/neovm-php/pkgs/container/neovm-php"><img src="https://img.shields.io/badge/Container_Registry-GHCR-2496ED?style=flat-square&logo=github&logoColor=white" alt="Container Registry"/></a>
 </p>
 
 ---
