@@ -1,14 +1,14 @@
 # NixVM PHP 8.3 Development Environment
 
-[![Build Status](https://github.com/btafoya/nixvm/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/btafoya/nixvm/actions)
+[![CI/CD](https://github.com/btafoya/neovm-php/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/btafoya/neovm-php/actions/workflows/docker-publish.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Docker Images](https://img.shields.io/badge/Docker-GHCR-blue.svg)](https://github.com/btafoya/nixvm/pkgs/container/nixvm)
+[![Docker Images](https://img.shields.io/badge/Docker-GHCR-blue.svg)](https://github.com/btafoya/neovm-php/pkgs/container/nixvm)
 [![PHP Version](https://img.shields.io/badge/PHP-8.3-blue.svg)](https://www.php.net/)
 [![Nix](https://img.shields.io/badge/Nix-Enabled-5277C3.svg)](https://nixos.org/)
 
-[![GitHub stars](https://img.shields.io/github/stars/btafoya/nixvm.svg)](https://github.com/btafoya/nixvm/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/btafoya/nixvm.svg)](https://github.com/btafoya/nixvm/network)
-[![GitHub issues](https://img.shields.io/github/issues/btafoya/nixvm.svg)](https://github.com/btafoya/nixvm/issues)
+[![GitHub stars](https://img.shields.io/github/stars/btafoya/neovm-php.svg)](https://github.com/btafoya/neovm-php/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/btafoya/neovm-php.svg)](https://github.com/btafoya/neovm-php/network)
+[![GitHub issues](https://img.shields.io/github/issues/btafoya/neovm-php.svg)](https://github.com/btafoya/neovm-php/issues)
 
 <p align="center">
   <img src="https://img.shields.io/badge/PHP-8.3-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.3"/>
@@ -22,8 +22,8 @@ A complete PHP 8.3 development environment with MariaDB and Caddy, built using N
 
 ## 📦 Container Images
 
-[![Docker Pulls](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2Fbtafoya%2Fnixvm%2Fpackages&query=%24.total_count&label=Docker%20Pulls&color=blue&logo=github)](https://github.com/btafoya/nixvm/pkgs/container/nixvm)
-[![Latest Build](https://img.shields.io/github/actions/workflow/status/btafoya/nixvm/docker-publish.yml?label=latest%20build)](https://github.com/btafoya/nixvm/actions/workflows/docker-publish.yml)
+[![Container Registry](https://img.shields.io/badge/Container-GHCR-2496ED.svg)](https://github.com/btafoya/neovm-php/pkgs/container/nixvm)
+[![CI Status](https://img.shields.io/github/actions/workflow/status/btafoya/neovm-php/docker-publish.yml)](https://github.com/btafoya/neovm-php/actions/workflows/docker-publish.yml)
 
 ### Available Images
 - `ghcr.io/btafoya/nixvm:php-app-latest` - PHP 8.3 + Caddy application server
@@ -48,13 +48,13 @@ A complete PHP 8.3 development environment with MariaDB and Caddy, built using N
 
 ## 🤝 Contributing & Community
 
-[![Contributors](https://img.shields.io/github/contributors/btafoya/nixvm.svg)](https://github.com/btafoya/nixvm/graphs/contributors)
-[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/btafoya/nixvm.svg)](https://github.com/btafoya/nixvm/commits/main)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/btafoya/nixvm/blob/main/CONTRIBUTING.md)
+[![Contributors](https://img.shields.io/github/contributors/btafoya/neovm-php.svg)](https://github.com/btafoya/neovm-php/graphs/contributors)
+[![GitHub last commit](https://img.shields.io/github/last-commit/btafoya/neovm-php.svg)](https://github.com/btafoya/neovm-php/commits/main)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/btafoya/neovm-php/blob/main/CONTRIBUTING.md)
 
 ### How to Contribute
-- 🐛 **Report Issues** - Found a bug? [Open an issue](https://github.com/btafoya/nixvm/issues)
-- 💡 **Suggest Features** - Have an idea? [Start a discussion](https://github.com/btafoya/nixvm/discussions)
+- 🐛 **Report Issues** - Found a bug? [Open an issue](https://github.com/btafoya/neovm-php/issues)
+- 💡 **Suggest Features** - Have an idea? [Start a discussion](https://github.com/btafoya/neovm-php/discussions)
 - 🔧 **Contribute Code** - See our [contributing guide](./CONTRIBUTING.md)
 - 📖 **Improve Docs** - Help make documentation better
 
@@ -481,10 +481,10 @@ Built with ❤️ using cutting-edge open source technologies.
 
 ### Repository Links
 <p align="center">
-  <a href="https://github.com/btafoya/nixvm"><img src="https://img.shields.io/badge/GitHub-Repository-181717?style=flat-square&logo=github&logoColor=white" alt="GitHub Repository"/></a>
-  <a href="https://github.com/btafoya/nixvm/issues"><img src="https://img.shields.io/badge/Issues-Report_Bug-red?style=flat-square&logo=github&logoColor=white" alt="Report Issues"/></a>
-  <a href="https://github.com/btafoya/nixvm/discussions"><img src="https://img.shields.io/badge/Discussions-Q&A-blue?style=flat-square&logo=github&logoColor=white" alt="Discussions"/></a>
-  <a href="https://github.com/btafoya/nixvm/pkgs/container/nixvm"><img src="https://img.shields.io/badge/Container_Registry-GHCR-2496ED?style=flat-square&logo=github&logoColor=white" alt="Container Registry"/></a>
+  <a href="https://github.com/btafoya/neovm-php"><img src="https://img.shields.io/badge/GitHub-Repository-181717?style=flat-square&logo=github&logoColor=white" alt="GitHub Repository"/></a>
+  <a href="https://github.com/btafoya/neovm-php/issues"><img src="https://img.shields.io/badge/Issues-Report_Bug-red?style=flat-square&logo=github&logoColor=white" alt="Report Issues"/></a>
+  <a href="https://github.com/btafoya/neovm-php/discussions"><img src="https://img.shields.io/badge/Discussions-Q&A-blue?style=flat-square&logo=github&logoColor=white" alt="Discussions"/></a>
+  <a href="https://github.com/btafoya/neovm-php/pkgs/container/nixvm"><img src="https://img.shields.io/badge/Container_Registry-GHCR-2496ED?style=flat-square&logo=github&logoColor=white" alt="Container Registry"/></a>
 </p>
 
 ---
