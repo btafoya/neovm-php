@@ -1,9 +1,30 @@
 <!DOCTYPE html>
+<?php
+
+declare(strict_types=1);
+
+// Environment detection
+$appEnv = getenv('APP_ENV') ?: 'development';
+$isProduction = $appEnv === 'production';
+$isDevelopment = !$isProduction;
+
+// Security: Hide errors in production
+if ($isProduction) {
+    ini_set('display_errors', '0');
+    ini_set('display_startup_errors', '0');
+    error_reporting(0);
+} else {
+    ini_set('display_errors', '1');
+    ini_set('display_startup_errors', '1');
+    error_reporting(E_ALL);
+}
+
+?>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NixVM PHP 8.3 Development Environment</title>
+    <title>NixVM PHP 8.3 <?php echo $isProduction ? 'Production' : 'Development'; ?> Environment</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -39,19 +60,31 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚀 NixVM PHP 8.3 Development Environment</h1>
+        <h1>🚀 NixVM PHP 8.3 <?php echo $isProduction ? 'Production' : 'Development'; ?> Environment</h1>
 
-        <div class="status success">
+        <div class="status <?php echo $isProduction ? 'info' : 'success'; ?>">
             <strong>✅ Environment Status:</strong> PHP 8.3, MariaDB, and Caddy are configured and ready!
+            <?php if ($isProduction): ?>
+                <br><strong>🔒 Production Mode:</strong> Debug features disabled, errors hidden.
+            <?php else: ?>
+                <br><strong>🔧 Development Mode:</strong> Debug features enabled, full error reporting.
+            <?php endif; ?>
         </div>
 
         <h2>📋 System Information</h2>
         <div class="code">
             <?php
+            echo "Environment: " . ($isProduction ? "Production" : "Development") . "<br>";
             echo "PHP Version: " . phpversion() . "<br>";
             echo "Server Software: " . $_SERVER['SERVER_SOFTWARE'] . "<br>";
-            echo "Document Root: " . $_SERVER['DOCUMENT_ROOT'] . "<br>";
+            if (!$isProduction) {
+                echo "Document Root: " . $_SERVER['DOCUMENT_ROOT'] . "<br>";
+            }
             echo "Current Time: " . date('Y-m-d H:i:s T') . "<br>";
+            if ($isDevelopment) {
+                echo "Error Reporting: " . (error_reporting() ? "Enabled" : "Disabled") . "<br>";
+                echo "Display Errors: " . ini_get('display_errors') . "<br>";
+            }
             ?>
         </div>
 
@@ -91,32 +124,41 @@
 
             echo '<div class="status success">';
             echo '<strong>✅ Database Connected!</strong><br>';
-            echo 'Users in database: ' . $result['user_count'];
-            echo '</div>';
+            if ($isDevelopment) {
+                echo 'Users in database: ' . $result['user_count'];
 
-            // Show recent posts
-            echo '<h3>📝 Recent Posts</h3>';
-            echo '<div class="code">';
-            $posts = $pdo->query("SELECT title, created_at FROM posts WHERE published = 1 ORDER BY created_at DESC LIMIT 5");
-            foreach ($posts as $post) {
-                echo htmlspecialchars($post['title']) . ' (' . $post['created_at'] . ')<br>';
+                // Show recent posts only in development
+                echo '<h3>📝 Recent Posts</h3>';
+                echo '<div class="code">';
+                $posts = $pdo->query("SELECT title, created_at FROM posts WHERE published = 1 ORDER BY created_at DESC LIMIT 5");
+                foreach ($posts as $post) {
+                    echo htmlspecialchars($post['title']) . ' (' . $post['created_at'] . ')<br>';
+                }
+                echo '</div>';
+            } else {
+                echo 'Database connection verified (details hidden in production)';
             }
             echo '</div>';
 
         } catch (PDOException $e) {
             echo '<div class="status" style="background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;">';
             echo '<strong>❌ Database Connection Failed:</strong><br>';
-            echo htmlspecialchars($e->getMessage());
+            if ($isDevelopment) {
+                echo htmlspecialchars($e->getMessage());
+            } else {
+                echo 'Connection error (details hidden in production for security)';
+            }
             echo '</div>';
         }
         ?>
 
+        <?php if ($isDevelopment): ?>
         <h2>🛠️ Development Tools</h2>
         <div class="info">
             <strong>Available URLs:</strong><br>
             • Main site: <a href="http://localhost">http://localhost</a><br>
             • Alternative: <a href="http://dev.nixvm.localhost">http://dev.nixvm.localhost</a><br>
-            • phpMyAdmin: <a href="http://localhost:8080">http://localhost:8080</a><br>
+            • phpMyAdmin: <a href="http://localhost:8081">http://localhost:8081</a><br>
             <br>
             <strong>Database credentials:</strong><br>
             Host: db (or localhost:3306)<br>
@@ -125,6 +167,19 @@
             Password: nixvm_pass<br>
             Root Password: rootpassword
         </div>
+        <?php endif; ?>
+
+        <?php if ($isProduction): ?>
+        <h2>📊 Production Status</h2>
+        <div class="info">
+            <strong>🚀 Application is running in production mode</strong><br>
+            • Debug information is hidden<br>
+            • Error reporting is disabled<br>
+            • Security features are enabled<br>
+            <br>
+            <em>For administrative access, use proper production management tools.</em>
+        </div>
+        <?php endif; ?>
 
         <h2>📚 Getting Started</h2>
         <div class="code">

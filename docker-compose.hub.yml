@@ -11,6 +11,8 @@ services:
       - "443:443"
     environment:
       - APP_ENV=${APP_ENV:-development}
+      - DOMAIN=${DOMAIN:-localhost}
+      - SSL_EMAIL=${SSL_EMAIL:-admin@localhost}
       - DB_HOST=db
       - DB_NAME=nixvm_dev
       - DB_USER=nixvm_user

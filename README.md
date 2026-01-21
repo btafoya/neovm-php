@@ -212,13 +212,59 @@ docker-compose exec db mariadb -u nixvm_user -p nixvm_pass nixvm_dev
 
 ## 🔒 Security Notes
 
-This is a development environment with relaxed security settings:
-- Database passwords are visible in configuration
-- HTTPS uses self-signed certificates
-- Error reporting is enabled
+### Development Environment
+The default setup is configured for development with relaxed security settings:
+- Database passwords are visible in configuration files
+- HTTPS uses self-signed certificates for localhost
+- Detailed error reporting is enabled
 - CORS is configured for development
+- Debug tools (Xdebug) are active
 
-**Do not use in production!**
+### Production Deployment
+When using Docker Hub images for production:
+
+**✅ Secure Configuration Required:**
+- Use environment variables for all secrets (never commit to code)
+- Configure proper SSL certificates (Let's Encrypt, custom certs)
+- Set `APP_ENV=production` to disable debug features
+- Use Docker secrets or external secret management
+- Configure proper firewall and network security
+- Regular security updates via automated builds
+
+**🔧 Production Environment Variables:**
+```bash
+# Required for production
+APP_ENV=production
+MYSQL_ROOT_PASSWORD_FILE=/run/secrets/mysql_root_password
+MYSQL_PASSWORD_FILE=/run/secrets/mysql_password
+
+# SSL Configuration (for Caddy)
+DOMAIN=yourdomain.com
+SSL_EMAIL=admin@yourdomain.com
+```
+
+**APP_ENV Functionality:**
+- **`APP_ENV=development`**: Debug enabled, errors shown, development tools visible
+- **`APP_ENV=production`**: Debug disabled, errors hidden, security features enabled, production SSL
+
+**🚀 Production Docker Compose:**
+```yaml
+services:
+  app:
+    image: btafoya/nixvm:php-app-v1.0.0  # Use versioned tags
+    environment:
+      - APP_ENV=production
+    secrets:
+      - mysql_password
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+```
+
+**⚠️ Important:** Always review and harden security settings before production deployment. The Docker Hub images provide a solid foundation but require proper security configuration for production use.
 
 ## 🤝 Contributing
 

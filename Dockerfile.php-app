@@ -34,8 +34,14 @@ COPY public/ /var/www/html/public/
 
 # Copy configuration files
 COPY docker/supervisord.conf /etc/supervisord.conf
-COPY docker/caddy/Caddyfile /etc/caddy/Caddyfile
-COPY docker/php/php.ini /etc/php/php.ini
+COPY docker/caddy/Caddyfile /etc/caddy/Caddyfile.development
+COPY docker/caddy/Caddyfile.production /etc/caddy/Caddyfile.production
+COPY docker/start.sh /usr/local/bin/start.sh
+COPY docker/php/php.ini /etc/php/php.ini.backup
+COPY docker/php/php.production.ini /etc/php/php.production.ini
+
+# Make startup script executable
+RUN chmod +x /usr/local/bin/start.sh
 
 # Create necessary directories
 RUN mkdir -p /var/log/php-fpm /var/log/caddy /var/run /tmp/sessions
@@ -54,5 +60,5 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 # Expose ports
 EXPOSE 80 443
 
-# Start supervisord to manage PHP-FPM and Caddy
-CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+# Start the application with environment-based configuration
+CMD ["/usr/local/bin/start.sh"]

@@ -114,8 +114,12 @@ info: ## Show environment information
 	@nix --version
 	@echo "Flake status:" && nix flake metadata . | cat
 
+# Test APP_ENV functionality
+test-app-env: ## Test APP_ENV development vs production modes
+	./test-app-env.sh
+
 # CI/CD simulation
-ci-test: nix-test docker-build ## Run CI-like checks locally
+ci-test: nix-test docker-build test-app-env ## Run CI-like checks locally
 	@echo "✅ All checks passed!"
 
 # Quick start targets

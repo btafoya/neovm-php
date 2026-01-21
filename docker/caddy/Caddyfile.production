@@ -1,0 +1,71 @@
+# Caddyfile for PHP 8.3 Production Environment
+
+# Production site with automatic HTTPS
+{$DOMAIN:localhost} {
+    root * /var/www/html
+    php_fastcgi php:9000
+    file_server
+
+    # Automatic HTTPS with Let's Encrypt (production)
+    tls {$SSL_EMAIL}
+
+    # Production headers (no debug info)
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-XSS-Protection "1; mode=block"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    }
+
+    # PHP file handling
+    @php {
+        path *.php
+    }
+    php_fastcgi @php php:9000
+
+    # Static files with aggressive caching
+    @static {
+        file {
+            try_files {path} {path}/ /index.php?{query}
+        }
+        path *.css *.js *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2 *.webp
+    }
+    header @static Cache-Control max-age=31536000
+    header @static X-Content-Type-Options nosniff
+
+    # API routes with compression
+    handle /api/* {
+        php_fastcgi php:9000
+        encode gzip
+    }
+
+    # Security headers for API
+    header /api/* {
+        Cache-Control no-cache
+        X-Content-Type-Options nosniff
+    }
+
+    # Health check endpoint
+    handle /health {
+        respond "OK" 200
+    }
+
+    # Log requests (production format)
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10mb
+            roll_keep 30
+        }
+        format json
+    }
+
+    # Rate limiting for production
+    rate_limit {
+        zone static {
+            key {remote_host}
+            window 1m
+            events 100
+        }
+    }
+}
