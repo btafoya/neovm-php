@@ -12,8 +12,8 @@ RUN nix-env -f '<nixpkgs>' -iA php83
 # Runtime stage
 FROM nixos/nix:latest
 
-# Copy PHP from builder
-COPY --from=builder /nix/store/*php* /nix/store/*php-cgi* /nix/store/*composer* /usr/local/bin/
+# Copy entire Nix store from builder
+COPY --from=builder /nix/store /nix/store
 
 # Copy application source
 COPY --chmod=755 . /var/www/html
@@ -27,28 +27,13 @@ COPY --chmod=644 docker/php/php.ini /usr/local/etc/php/
 COPY --chmod=644 docker/php/php.production.ini /usr/local/etc/php/
 COPY --chmod=644 docker/supervisord.conf /etc/supervisord.conf
 
-# Install runtime dependencies via Nix
-RUN nix-env -f '<nixpkgs>' -iA \
-    php83Extensions.pdo_mysql \
-    php83Extensions.mysqli \
-    php83Extensions.mbstring \
-    php83Extensions.curl \
-    php83Extensions.gd \
-    php83Extensions.zip \
-    php83Extensions.intl \
-    php83Extensions.opcache \
-    caddy \
-    curl \
-    supervisor \
-    && mkdir -p /var/log/php-fpm /var/log/caddy /var/run /tmp/sessions
-
-# Set up environment
+# Set up PATH to find Nix binaries
 ENV PATH=/nix/var/nix/profiles/default/bin:/nix/store/*/bin:$PATH
 ENV PHP_FPM_LISTEN=/var/run/php-fpm.sock
 
 WORKDIR /var/www/html
 
-# Create directories and set permissions
+# Create directories
 RUN mkdir -p /var/log/php-fpm /var/log/caddy /var/run /tmp/sessions
 
 EXPOSE 80 443

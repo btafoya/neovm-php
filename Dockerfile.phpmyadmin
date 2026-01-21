@@ -3,17 +3,16 @@ FROM nixos/nix:latest AS builder
 
 RUN nix-channel --add https://nixos.org/channels/nixos-unstable nixpkgs && nix-channel --update
 RUN nix-env -f '<nixpkgs>' -iA php83
-RUN nix-env -f '<nixpkgs>' -iA php83Extensions.pdo_mysql
-RUN nix-env -f '<nixpkgs>' -iA php83Extensions.mysqli
-RUN nix-env -f '<nixpkgs>' -iA php83Extensions.mbstring
 RUN nix-env -f '<nixpkgs>' -iA caddy
 
 # Runtime stage
 FROM nixos/nix:latest
 
-COPY --from=builder /nix/store/*php* /nix/store/*caddy* /nix/store/*curl* /usr/local/bin/
+# Copy entire Nix store from builder
+COPY --from=builder /nix/store /nix/store
 COPY docker/phpmyadmin/config.inc.php /etc/phpmyadmin/config.inc.php
 
+# Set up PATH to find Nix binaries
 ENV PATH=/nix/var/nix/profiles/default/bin:/nix/store/*/bin:$PATH
 ENV PMA_HOST=db
 ENV PMA_PORT=3306
