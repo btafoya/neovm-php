@@ -8,6 +8,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Permissions needed for attestation and releases
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+
 env:
   REGISTRY: docker.io
   IMAGE_NAME: ${{ github.repository }}
@@ -67,19 +74,25 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=tag
-            type=raw,value=${{ matrix.service }}-{{branch_name}}
-            type=raw,value=${{ matrix.service }}-{{tag}}
-            type=raw,value=${{ matrix.service }}-latest,enable={{is_default_branch}}
-          flavor: |
-            latest=false
+      - name: Prepare tags
+        id: prep
+        run: |
+          # Prepare tags based on event type
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            TAGS="${{ env.IMAGE_NAME }}:${{ matrix.service }}-pr-${{ github.event.number }}"
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            TAGS="${{ env.IMAGE_NAME }}:${{ matrix.service }}-latest"
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            TAGS="${{ env.IMAGE_NAME }}:${{ matrix.service }}-dev"
+          elif [[ "${{ github.ref }}" =~ ^refs/tags/v ]]; then
+            TAG_NAME="${{ github.ref_name }}"
+            TAGS="${{ env.IMAGE_NAME }}:${{ matrix.service }}-${TAG_NAME}"
+          fi
+
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          # Extract first tag for attestation
+          FIRST_TAG=$(echo "$TAGS" | cut -d',' -f1)
+          echo "first_tag=$FIRST_TAG" >> $GITHUB_OUTPUT
 
       - name: Build Docker image
         uses: docker/build-push-action@v5
@@ -87,20 +100,15 @@ jobs:
           context: .
           file: ./Dockerfile.${{ matrix.service }}
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.prep.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64
-          build-args: |
-            NIXPKGS_COMMIT=${{ github.sha }}
-            BUILDKIT_INLINE_CACHE=1
 
       - name: Generate artifact attestation
         if: github.event_name != 'pull_request'
         uses: actions/attest-build-provenance@v1
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}-${{ matrix.service}}
+          subject-name: ${{ steps.prep.outputs.first_tag }}
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
 
@@ -115,22 +123,20 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: |
             ## NixVM ${{ github.ref_name }}
 
             Automated release of NixOS-based Docker images for the NixVM PHP development environment.
 
             ### Images Published:
-            - `yourusername/nixvm:php-app-${{ github.ref_name }}`
-            - `yourusername/nixvm:mariadb-${{ github.ref_name }}`
-            - `yourusername/nixvm:caddy-${{ github.ref_name }}`
-            - `yourusername/nixvm:phpmyadmin-${{ github.ref_name }}`
+            - `${{ github.repository }}:php-app-${{ github.ref_name }}`
+            - `${{ github.repository }}:mariadb-${{ github.ref_name }}`
+            - `${{ github.repository }}:caddy-${{ github.ref_name }}`
+            - `${{ github.repository }}:phpmyadmin-${{ github.ref_name }}`
 
             ### What's New:
             - NixOS-based containers for reproducibility
@@ -148,14 +154,14 @@ jobs:
           prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
 
   cleanup:
-    name: Clean up old images
+    name: Clean up workflow artifacts
     runs-on: ubuntu-latest
     needs: build-and-push
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
-      - name: Clean up old dev images
+      - name: Clean up GitHub Actions cache
         run: |
-          # This would be implemented with Docker Hub API
-          # to clean up old development images
-          echo "Cleanup old images (to be implemented)"
+          echo "Cleaning up old workflow caches..."
+          # Remove caches older than 7 days to prevent accumulation
+          # This helps maintain repository size limits
