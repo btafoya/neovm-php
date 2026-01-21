@@ -2,13 +2,43 @@
 
 # NixVM Interactive Install Script
 # Comprehensive setup for PHP + MariaDB + Caddy development environment
+#
+# Usage:
+#   ./install.sh                     # Run in current directory
+#   ./install.sh --dir /path/to/dir  # Install to specific directory
+#
+# One-line installation (no git clone required):
+#   curl -sSL https://raw.githubusercontent.com/btafoya/neovm-php/main/install.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/btafoya/neovm-php/main/install.sh | bash -s -- --dir /path/to/project
+#
+# For forks:
+#   REPO_URL=https://raw.githubusercontent.com/YOURUSER/yourrepo/branch curl -sSL https://raw.githubusercontent.com/YOURUSER/yourrepo/branch/install.sh | bash
 
 set -euo pipefail
 
 # Configuration variables
-SCRIPT_VERSION="1.0.0"
+SCRIPT_VERSION="1.1.0"
 REQUIRED_TOOLS=("curl" "git")
 OPTIONAL_TOOLS=("docker" "docker-compose")
+
+# Default values from .env.example
+DEFAULT_DOCKERHUB_USERNAME="btafoya"
+DEFAULT_PORT="8080"
+DEFAULT_PHP_VERSION="8.4"
+DEFAULT_APP_ENV="development"
+DEFAULT_MYSQL_ROOT_PASSWORD="rootpassword"
+DEFAULT_MYSQL_DATABASE="nixvm_dev"
+DEFAULT_MYSQL_USER="nixvm_user"
+DEFAULT_MYSQL_PASSWORD="nixvm_pass"
+DEFAULT_PHP_MEMORY_LIMIT="256M"
+DEFAULT_PHP_UPLOAD_MAX_FILESIZE="100M"
+DEFAULT_PHP_POST_MAX_SIZE="100M"
+DEFAULT_COMPOSER_ALLOW_SUPERUSER="1"
+DEFAULT_COMPOSER_MEMORY_LIMIT="-1"
+
+# Installation directory
+INSTALL_DIR=""
+ORIGINAL_DIR="$(pwd)"
 
 # Color codes for output
 RED='\033[0;31m'
@@ -19,38 +49,142 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
+# Repository configuration for file downloads
+REPO_URL="${REPO_URL:-https://raw.githubusercontent.com/btafoya/neovm-php/main}"
+
+# Files to download from repository
+REPO_FILES=(
+    ".env.example"
+    "docker-compose.hub.yml"
+    "docker/caddy/Caddyfile"
+    "docker/php/www.conf"
+    "docker/mariadb/init.sql"
+)
+
 # Progress tracking
 CURRENT_STEP=0
 TOTAL_STEPS=16
-
-# Configuration variables (will be set interactively)
-DOCKERHUB_USERNAME=""
-APP_ENV=""
-PORT=""
-ENABLE_LETS_ENCRYPT=""
-DOMAIN=""
-SSL_EMAIL=""
-ADDITIONAL_DOMAINS=()
-ENABLE_REDIRECT=""
-REDIRECT_PORT=""
-ENABLE_CUSTOM_CERTS=""
-SSL_CERT_PATH=""
-SSL_KEY_PATH=""
-ENABLE_DEV_CERTS=""
-INSTALL_MKCERT=""
-MYSQL_ROOT_PASSWORD=""
-MYSQL_DATABASE=""
-MYSQL_USER=""
-MYSQL_PASSWORD=""
-PHP_MEMORY_LIMIT=""
-PHP_UPLOAD_MAX_FILESIZE=""
-PHP_POST_MAX_SIZE=""
-PHP_VERSION=""
-COMPOSER_ALLOW_SUPERUSER=""
-COMPOSER_MEMORY_LIMIT=""
-INSTALL_MODE=""
+IS_STANDALONE=false
 
 # Utility functions
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dir)
+                INSTALL_DIR="$2"
+                if [ -z "$INSTALL_DIR" ]; then
+                    print_error "Error: --dir requires a path argument"
+                    exit 1
+                fi
+                shift 2
+                ;;
+            --help|-h)
+                echo "NixVM Interactive Installer v${SCRIPT_VERSION}"
+                echo ""
+                echo "Usage: $0 [OPTIONS]"
+                echo ""
+                echo "Options:"
+                echo "  --dir PATH    Install to specified directory (creates if needed)"
+                echo "  --help, -h    Show this help message"
+                echo ""
+                echo "One-line installation:"
+                echo "  curl -sSL https://raw.githubusercontent.com/btafoya/neovm-php/main/install.sh | bash"
+                echo "  curl -sSL https://raw.githubusercontent.com/btafoya/neovm-php/main/install.sh | bash -s -- --dir /path/to/project"
+                echo ""
+                echo "For forks:"
+                echo "  REPO_URL=https://raw.githubusercontent.com/YOURUSER/yourrepo/branch \\"
+                echo "    curl -sSL https://raw.githubusercontent.com/YOURUSER/yourrepo/branch/install.sh | bash"
+                exit 0
+                ;;
+            *)
+                print_error "Unknown option: $1"
+                echo "Use --help for usage information"
+                exit 1
+                ;;
+        esac
+    done
+}
+
+download_file() {
+    local remote_path="$1"
+    local local_path="$2"
+    local max_retries=3
+    local retry=1
+    local download_url="${REPO_URL}/${remote_path}"
+
+    while [ $retry -le $max_retries ]; do
+        if curl -fsSL --connect-timeout 30 --max-time 120 "$download_url" -o "$local_path" 2>/dev/null; then
+            return 0
+        fi
+        print_warning "Download attempt $retry/$max_retries failed: $remote_path"
+        retry=$((retry + 1))
+        if [ $retry -le $max_retries ]; then
+            sleep 2
+        fi
+    done
+
+    print_error "Failed to download: $remote_path after $max_retries attempts"
+    return 1
+}
+
+download_all_files() {
+    print_step "📥 Downloading NixVM configuration files from GitHub..."
+
+    for file in "${REPO_FILES[@]}"; do
+        local local_file="${INSTALL_DIR:-.}/${file}"
+        local local_dir
+        local_dir=$(dirname "$local_file")
+
+        if [ ! -f "$local_file" ]; then
+            mkdir -p "$local_dir"
+            if download_file "$file" "$local_file"; then
+                print_success "Downloaded: $file"
+            else
+                print_error "Failed to download: $file"
+                return 1
+            fi
+        else
+            print_info "Using existing: $file"
+        fi
+    done
+
+    print_success "All configuration files downloaded successfully"
+    return 0
+}
+
+check_and_download_files() {
+    if [ ! -f ".env.example" ] && [ ! -f "docker-compose.hub.yml" ]; then
+        IS_STANDALONE=true
+        echo ""
+        print_info "Running from standalone installer - required files will be downloaded from GitHub"
+        echo ""
+
+        if ! download_all_files; then
+            print_error "Failed to download required files. Please check your network connection."
+            print_info "You can also clone the repository manually:"
+            echo "  git clone https://github.com/btafoya/nixvm.git"
+            exit 1
+        fi
+        echo ""
+    else
+        IS_STANDALONE=false
+    fi
+}
+
+change_to_install_dir() {
+    if [ -n "$INSTALL_DIR" ]; then
+        if [ ! -d "$INSTALL_DIR" ]; then
+            print_step "📁 Creating installation directory: $INSTALL_DIR"
+            mkdir -p "$INSTALL_DIR"
+        fi
+
+        if [ "$(pwd)" != "$INSTALL_DIR" ]; then
+            print_info "Changing to installation directory: $INSTALL_DIR"
+            cd "$INSTALL_DIR"
+        fi
+    fi
+}
+
 show_progress() {
     local current=$1
     local message=$2
@@ -1343,9 +1477,14 @@ show_completion_message() {
 
 # Main installation flow
 main() {
-    # Initialize
+    parse_arguments "$@"
+
+    change_to_install_dir
+
+    check_and_download_files
+
     PROGRESS_WIDTH=50
-    DOCKERHUB_USERNAME="btafoya"  # Default from .env.example
+    DOCKERHUB_USERNAME="$DEFAULT_DOCKERHUB_USERNAME"
 
     # Welcome
     print_header

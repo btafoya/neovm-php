@@ -60,10 +60,32 @@ A complete PHP 8.3 development environment with MariaDB and Caddy, built using N
 
 ## 🚀 Quick Start
 
-### Interactive Installation (Recommended)
+### One-Line Installation (No Git Clone Required)
+
+The easiest way to get started is to run the installer directly from GitHub:
 
 ```bash
-# Run the interactive installer
+# Download and run installer interactively (installs to current directory)
+curl -sSL https://raw.githubusercontent.com/btafoya/neovm-php/main/install.sh | bash
+
+# Install to a specific directory
+curl -sSL https://raw.githubusercontent.com/btafoya/neovm-php/main/install.sh | bash -s -- --dir /path/to/project
+
+# For forks, specify REPO_URL
+REPO_URL=https://raw.githubusercontent.com/YOURUSER/yourrepo/branch \
+  curl -sSL https://raw.githubusercontent.com/YOURUSER/yourrepo/branch/install.sh | bash
+```
+
+The installer will:
+1. Download required configuration files from GitHub
+2. Prompt you for configuration options interactively
+3. Generate `.env`, `Caddyfile`, and Docker configs
+4. Start your development environment
+
+### Interactive Installation (From Repository)
+
+```bash
+# Option 1: Run from cloned repository
 ./install.sh
 
 # Follow the prompts to configure your environment
