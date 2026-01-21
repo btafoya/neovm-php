@@ -1,95 +1,22 @@
-# NixOS-based phpMyAdmin
-FROM nixos/nix:latest
-
-# Install phpMyAdmin and web server dependencies via Nix
-RUN nix-env -iA nixpkgs.phpMyAdmin nixpkgs.nginx nixpkgs.bash nixpkgs.coreutils nixpkgs.php83
-
-# Create necessary directories
-RUN mkdir -p /var/www/html /var/log/nginx /var/cache/nginx /tmp/sessions
-
-# Copy phpMyAdmin files
-RUN cp -r $(nix eval --raw nixpkgs#phpMyAdmin)/share/phpmyadmin/* /var/www/html/
+# phpMyAdmin with Nginx and PHP-FPM
+FROM phpmyadmin/phpmyadmin:latest
 
 # Copy custom configuration
-COPY docker/phpmyadmin/config.inc.php /var/www/html/config.inc.php
-
-# Create nginx configuration for phpMyAdmin
-RUN cat > /etc/nginx.conf << 'EOF'
-worker_processes 1;
-events {
-    worker_connections 1024;
-}
-http {
-    include /etc/nginx/mime.types;
-    default_type application/octet-stream;
-
-    sendfile on;
-    keepalive_timeout 65;
-
-    server {
-        listen 80;
-        server_name localhost;
-        root /var/www/html;
-        index index.php;
-
-        location / {
-            try_files $uri $uri/ =404;
-        }
-
-        location ~ \.php$ {
-            fastcgi_pass unix:/var/run/php-fpm.sock;
-            fastcgi_index index.php;
-            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-            include fastcgi_params;
-        }
-
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
-            expires 1y;
-            add_header Cache-Control "public, immutable";
-        }
-    }
-}
-EOF
-
-# Configure PHP-FPM for phpMyAdmin
-RUN mkdir -p /var/run/php-fpm && \
-    cat > /etc/php-fpm.conf << 'EOF'
-[global]
-pid = /var/run/php-fpm.pid
-error_log = /var/log/php-fpm.log
-
-[www]
-user = nixbld
-group = nixbld
-listen = /var/run/php-fpm.sock
-listen.owner = nixbld
-listen.group = nixbld
-pm = dynamic
-pm.max_children = 10
-pm.start_servers = 2
-pm.min_spare_servers = 1
-pm.max_spare_servers = 3
-EOF
-
-# Create health check script
-RUN echo '#!/bin/bash\ncurl -f http://localhost/ || exit 1' > /usr/local/bin/healthcheck.sh && \
-    chmod +x /usr/local/bin/healthcheck.sh
-
-# Set proper permissions
-RUN chown -R nixbld:nixbld /var/www/html /var/log/nginx /var/cache/nginx /var/run /tmp/sessions
+COPY docker/phpmyadmin/config.inc.php /etc/phpmyadmin/config.inc.php
 
 # Environment variables for phpMyAdmin
 ENV PMA_HOST=db
 ENV PMA_PORT=3306
 ENV PMA_USER=nixvm_user
 ENV PMA_PASSWORD=nixvm_pass
+ENV UPLOAD_LIMIT=100M
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD /usr/local/bin/healthcheck.sh
+  CMD curl -f http://localhost/ || exit 1
 
 # Expose port
 EXPOSE 80
 
-# Start both nginx and PHP-FPM
-CMD ["sh", "-c", "php-fpm -F & nginx -g 'daemon off;'"]
+# Use default phpMyAdmin entrypoint
+CMD ["apache2-foreground"]

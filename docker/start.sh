@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#!/bin/bash
+
 # Environment-based configuration selector for NixVM PHP App
 
 # Default to development if not set
@@ -14,10 +16,10 @@ echo "🌐 Domain: $DOMAIN"
 # Select PHP configuration based on environment
 if [ "$APP_ENV" = "production" ]; then
     echo "🔒 Production mode: Using secure PHP configuration"
-    cp /etc/php/php.production.ini /etc/php/php.ini
+    cp /usr/local/etc/php/php.ini.production /usr/local/etc/php/php.ini
 else
     echo "🔧 Development mode: Using development PHP configuration"
-    cp /etc/php/php.ini.backup /etc/php/php.ini 2>/dev/null || echo "Using default development config"
+    cp /usr/local/etc/php/php.ini.development /usr/local/etc/php/php.ini 2>/dev/null || echo "Using default development config"
 fi
 
 # Select Caddy configuration based on environment
@@ -29,10 +31,15 @@ else
     cp /etc/caddy/Caddyfile.development /etc/caddy/Caddyfile 2>/dev/null || echo "Using default development Caddy config"
 fi
 
-# Set Caddy environment variables
-export DOMAIN="$DOMAIN"
-export SSL_EMAIL="$SSL_EMAIL"
+# Set Caddy environment variables for production
+if [ "$APP_ENV" = "production" ]; then
+    export DOMAIN="$DOMAIN"
+    export SSL_EMAIL="$SSL_EMAIL"
+fi
 
-# Start supervisord
+# Create necessary directories
+mkdir -p /var/run/php-fpm /var/log/supervisor
+
+# Start PHP-FPM and Caddy via supervisord
 echo "📦 Starting services..."
 exec supervisord -c /etc/supervisord.conf

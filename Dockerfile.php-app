@@ -1,44 +1,74 @@
-# NixOS-based PHP Application with Caddy Routing
-FROM nixos/nix:latest AS builder
+# PHP Application with Caddy Routing
+FROM php:8.3-fpm
 
-# Enable experimental features for flakes
-RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+# Install system dependencies for PHP extensions
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libc-client-dev \
+    libkrb5-dev \
+    libmagickwand-dev \
+    imagemagick \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy Nix configuration files
-COPY flake.nix flake.lock shell.nix composer.json composer.lock ./
+# Configure and install PHP extensions
+RUN docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
+    && docker-php-ext-install \
+        pdo_mysql \
+        mysqli \
+        mbstring \
+        curl \
+        gd \
+        zip \
+        intl \
+        opcache \
+        imap
 
-# Copy source code for build context
+# Install Imagick extension
+RUN pecl install imagick \
+    && docker-php-ext-enable imagick
+
+# Install Xdebug
+RUN pecl install xdebug \
+    && docker-php-ext-enable xdebug
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy composer files first for better caching
+COPY composer.json composer.lock ./
+
+# Install PHP dependencies (production)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+
+# Copy application code
 COPY src/ ./src/
 COPY public/ ./public/
-COPY tests/ ./tests/
-
-# Build PHP environment using the existing flake
-RUN nix build .#packages.x86_64-linux.php83 --out-link /tmp/php-build
-
-# Install Composer dependencies (production optimized)
-RUN nix develop .#devShells.x86_64-linux.default --command "composer install --no-dev --optimize-autoloader --no-interaction"
-
-# Runtime stage
-FROM nixos/nix:latest
-
-# Install runtime dependencies via Nix
-RUN nix-env -iA nixpkgs.caddy nixpkgs.supervisord nixpkgs.bash nixpkgs.coreutils
-
-# Copy built PHP environment from builder
-COPY --from=builder /tmp/php-build /opt/php-app
-
-# Copy application code and dependencies
-COPY --from=builder vendor/ /var/www/html/vendor/
-COPY src/ /var/www/html/src/
-COPY public/ /var/www/html/public/
 
 # Copy configuration files
 COPY docker/supervisord.conf /etc/supervisord.conf
-COPY docker/caddy/Caddyfile /etc/caddy/Caddyfile.development
+COPY docker/caddy/Caddyfile.development /etc/caddy/Caddyfile.development
 COPY docker/caddy/Caddyfile.production /etc/caddy/Caddyfile.production
 COPY docker/start.sh /usr/local/bin/start.sh
-COPY docker/php/php.ini /etc/php/php.ini.backup
-COPY docker/php/php.production.ini /etc/php/php.production.ini
+COPY docker/php/php.ini /usr/local/etc/php/php.ini.development
+COPY docker/php/php.production.ini /usr/local/etc/php/php.ini.production
+
+# Install Caddy
+RUN apt-get update && apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl \
+    && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg \
+    && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list \
+    && apt-get update && apt-get install -y caddy \
+    && rm -rf /var/lib/apt/lists/*
 
 # Make startup script executable
 RUN chmod +x /usr/local/bin/start.sh
@@ -47,11 +77,10 @@ RUN chmod +x /usr/local/bin/start.sh
 RUN mkdir -p /var/log/php-fpm /var/log/caddy /var/run /tmp/sessions
 
 # Set proper permissions
-RUN chown -R nixbld:nixbld /var/www/html /var/log/php-fpm /var/log/caddy /tmp/sessions
+RUN chown -R www-data:www-data /var/www/html /var/log/php-fpm /var/log/caddy /tmp/sessions
 
 # Environment variables
 ENV PHP_FPM_LISTEN=/var/run/php-fpm.sock
-ENV CADDY_CONFIG=/etc/caddy/Caddyfile
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

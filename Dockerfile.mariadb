@@ -1,35 +1,23 @@
-# NixOS-based MariaDB Database Server
-FROM nixos/nix:latest
+# MariaDB Database Server
+FROM mariadb:10.11
 
-# Install MariaDB via Nix
-RUN nix-env -iA nixpkgs.mariadb nixpkgs.bash nixpkgs.coreutils
-
-# Create MariaDB directories
-RUN mkdir -p /var/lib/mysql /var/log/mysql /var/run/mysqld /docker-entrypoint-initdb.d
-
-# Copy NixVM-specific MariaDB configuration
-COPY docker/mariadb/my.cnf /etc/mysql/my.cnf
+# Copy NixVM-specific MariaDB configuration and initialization
+COPY docker/mariadb/my.cnf /etc/mysql/conf.d/nixvm.cnf
 COPY docker/mariadb/init.sql /docker-entrypoint-initdb.d/init.sql
-
-# Set proper permissions
-RUN chown -R nixbld:nixbld /var/lib/mysql /var/log/mysql /var/run/mysqld
-
-# Create health check script
-RUN echo '#!/bin/bash\nmysqladmin ping -h localhost --silent' > /usr/local/bin/healthcheck.sh && \
-    chmod +x /usr/local/bin/healthcheck.sh
-
-# Expose MariaDB port
-EXPOSE 3306
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD /usr/local/bin/healthcheck.sh
 
 # Set default environment variables for MariaDB
 ENV MYSQL_ROOT_PASSWORD=rootpassword
 ENV MYSQL_DATABASE=nixvm_dev
 ENV MYSQL_USER=nixvm_user
 ENV MYSQL_PASSWORD=nixvm_pass
+ENV MYSQL_ALLOW_EMPTY_PASSWORD=no
 
-# Initialize and start MariaDB
-CMD ["mysqld", "--defaults-file=/etc/mysql/my.cnf", "--user=nixbld"]
+# Expose MariaDB port
+EXPOSE 3306
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD mysqladmin ping -h localhost --silent
+
+# Use default MariaDB entrypoint
+CMD ["mysqld"]
