@@ -3,7 +3,9 @@
 [![CI/CD](https://github.com/btafoya/neovm-php/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/btafoya/neovm-php/actions/workflows/docker-publish.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker Images](https://img.shields.io/badge/Docker-GHCR-blue.svg)](https://github.com/btafoya/neovm-php/pkgs/container/neovm-php)
+[![PHP Version](https://img.shields.io/badge/PHP-8.4-blue.svg)](https://www.php.net/)
 [![PHP Version](https://img.shields.io/badge/PHP-8.3-blue.svg)](https://www.php.net/)
+[![PHP Version](https://img.shields.io/badge/PHP-8.2-blue.svg)](https://www.php.net/)
 [![Nix](https://img.shields.io/badge/Nix-Enabled-5277C3.svg)](https://nixos.org/)
 
 [![GitHub stars](https://img.shields.io/github/stars/btafoya/neovm-php.svg)](https://github.com/btafoya/neovm-php/stargazers)
@@ -11,14 +13,16 @@
 [![GitHub issues](https://img.shields.io/github/issues/btafoya/neovm-php.svg)](https://github.com/btafoya/neovm-php/issues)
 
 <p align="center">
+  <img src="https://img.shields.io/badge/PHP-8.4-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.4"/>
   <img src="https://img.shields.io/badge/PHP-8.3-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.3"/>
+  <img src="https://img.shields.io/badge/PHP-8.2-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP 8.2"/>
   <img src="https://img.shields.io/badge/MariaDB-10.11-003545?style=for-the-badge&logo=mariadb&logoColor=white" alt="MariaDB 10.11"/>
   <img src="https://img.shields.io/badge/Caddy-2.0-1F88C7?style=for-the-badge&logo=caddy&logoColor=white" alt="Caddy 2.0"/>
   <img src="https://img.shields.io/badge/NixOS-Enabled-5277C3?style=for-the-badge&logo=nixos&logoColor=white" alt="NixOS"/>
   <img src="https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
 </p>
 
-A complete PHP 8.3 development environment with MariaDB and Caddy, built using Nix for reproducible builds and Docker for containerization.
+A complete PHP production and development environment with MariaDB and Caddy, built using Nix for reproducible builds and Docker for containerization.
 
 ## 📦 Container Images
 
@@ -26,7 +30,7 @@ A complete PHP 8.3 development environment with MariaDB and Caddy, built using N
 [![CI Status](https://img.shields.io/github/actions/workflow/status/btafoya/neovm-php/docker-publish.yml)](https://github.com/btafoya/neovm-php/actions/workflows/docker-publish.yml)
 
 ### Available Images
-- `ghcr.io/btafoya/neovm-php:php-app-latest` - PHP 8.3 + Caddy application server
+- `ghcr.io/btafoya/neovm-php:php-app-latest` - PHP + Caddy application server
 - `ghcr.io/btafoya/neovm-php:mariadb-latest` - MariaDB 10.11 database
 - `ghcr.io/btafoya/neovm-php:caddy-latest` - Standalone Caddy web server
 - `ghcr.io/btafoya/neovm-php:phpmyadmin-latest` - phpMyAdmin database manager
@@ -123,7 +127,7 @@ nix-shell
 
 ## 📋 What's Included
 
-- **PHP 8.3** with extensions: PDO, MySQLi, GD, ZIP, IMAP, Imagick, Mbstring, cURL, Intl, OPcache, Xdebug
+- **PHP 8.4, 8.3, 8.2** with extensions: PDO, MySQLi, GD, ZIP, IMAP, Imagick, Mbstring, cURL, Intl, OPcache, Xdebug
 - **MariaDB 10.11** database server
 - **Caddy 2** web server with automatic HTTPS
 - **phpMyAdmin** for database management
@@ -131,7 +135,7 @@ nix-shell
 - **Composer** for dependency management
 - **Development tools** (PHPStan, PHP-CS-Fixer, PHPUnit)
 
-**Note**: The `mcrypt` extension is not available in PHP 8.3 as it was removed from PHP core in PHP 7.2+. Consider using `openssl` or `sodium` extensions instead.
+**Note**: The `mcrypt` extension is not available in PHP 8 as it was removed from PHP core in PHP 7.2+. Consider using `openssl` or `sodium` extensions instead.
 
 ## 🛠️ Installation Script
 
@@ -476,7 +480,7 @@ This environment is designed to be easily extensible. Add new services to `docke
 
 ## 📚 Resources
 
-- [PHP 8.3 Documentation](https://www.php.net/docs.php)
+- [PHP Documentation](https://www.php.net/docs.php)
 - [Caddy Documentation](https://caddyserver.com/docs/)
 - [MariaDB Documentation](https://mariadb.com/kb/en/documentation/)
 - [Nix Documentation](https://nixos.org/learn.html)
