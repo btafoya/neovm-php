@@ -835,16 +835,19 @@ configure_php_version() {
         case ${choice:-1} in
             1)
                 PHP_VERSION="8.4"
+                PHP_PACKAGE="php84"
                 print_success "Selected: PHP 8.4"
                 break
                 ;;
             2)
                 PHP_VERSION="8.3"
+                PHP_PACKAGE="php83"
                 print_success "Selected: PHP 8.3"
                 break
                 ;;
             3)
                 PHP_VERSION="8.2"
+                PHP_PACKAGE="php82"
                 print_success "Selected: PHP 8.2"
                 break
                 ;;
@@ -853,6 +856,31 @@ configure_php_version() {
                 ;;
         esac
     done
+
+    update_php_version_in_files
+}
+
+update_php_version_in_files() {
+    print_step "Updating PHP version in configuration files"
+
+    local old_php_package="php83"
+
+    if [ -f "Dockerfile.php-app" ]; then
+        sed -i "s/-iA ${old_php_package}/-iA ${PHP_PACKAGE}/g" "Dockerfile.php-app"
+        print_success "Updated Dockerfile.php-app (${old_php_package} → ${PHP_PACKAGE})"
+    else
+        print_warning "Dockerfile.php-app not found, skipping update"
+    fi
+
+    if [ -f "flake.nix" ]; then
+        sed -i "s/${old_php_package}/${PHP_PACKAGE}/g" "flake.nix"
+        sed -i "s/PHP 8.3/PHP ${PHP_VERSION}/g" "flake.nix"
+        print_success "Updated flake.nix (PHP 8.3 → PHP ${PHP_VERSION})"
+    else
+        print_warning "flake.nix not found, skipping update"
+    fi
+
+    print_info "Note: Run 'nix flake update' to update flake.lock with new dependencies"
 }
 
 configure_php() {
