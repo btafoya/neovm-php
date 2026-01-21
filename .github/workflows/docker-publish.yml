@@ -1,5 +1,6 @@
-name: Build and Publish NixOS Docker Images
+name: Build and Publish NixVM Docker Images
 
+# Trigger on pushes to main/develop branches, version tags, and pull requests
 on:
   push:
     branches: [main, develop]
@@ -8,7 +9,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Permissions needed for attestation and releases
+# Permissions needed for Docker Hub publishing and build attestation
 permissions:
   contents: read
   packages: write
@@ -38,7 +39,7 @@ jobs:
         run: nix flake check
 
       - name: Build PHP package
-        run: nix build .#packages.x86_64-linux.php83
+        run: nix build .#packages.x86_64-linux.default
 
       - name: Test development shell
         run: nix develop --command "php --version && composer --version"
@@ -73,28 +74,45 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Validate Dockerfile
+        run: |
+          if [ ! -f "Dockerfile.${{ matrix.service }}" ]; then
+            echo "❌ Dockerfile.${{ matrix.service }} not found"
+            exit 1
+          fi
+          echo "✅ Dockerfile.${{ matrix.service }} found"
 
       - name: Prepare tags
         id: prep
         run: |
+          # Get event information from environment
+          EVENT_NAME="${{ github.event_name }}"
+          REF="${{ github.ref }}"
+          REF_NAME="${{ github.ref_name }}"
+          PR_NUMBER="${{ github.event.number }}"
+          IMAGE_NAME="${{ env.IMAGE_NAME }}"
+          SERVICE="${{ matrix.service }}"
+
           # Prepare tags based on event type
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            TAGS="${{ env.IMAGE_NAME }}:${{ matrix.service }}-pr-${{ github.event.number }}"
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            TAGS="${{ env.IMAGE_NAME }}:${{ matrix.service }}-latest"
-          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
-            TAGS="${{ env.IMAGE_NAME }}:${{ matrix.service }}-dev"
-          elif [[ "${{ github.ref }}" =~ ^refs/tags/v ]]; then
-            TAG_NAME="${{ github.ref_name }}"
-            TAGS="${{ env.IMAGE_NAME }}:${{ matrix.service }}-${TAG_NAME}"
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            TAGS="$IMAGE_NAME:$SERVICE-pr-$PR_NUMBER"
+          elif [[ "$REF" == "refs/heads/main" ]]; then
+            TAGS="$IMAGE_NAME:$SERVICE-latest"
+          elif [[ "$REF" == "refs/heads/develop" ]]; then
+            TAGS="$IMAGE_NAME:$SERVICE-dev"
+          elif [[ "$REF" =~ ^refs/tags/v ]]; then
+            TAGS="$IMAGE_NAME:$SERVICE-$REF_NAME"
+          else
+            TAGS="$IMAGE_NAME:$SERVICE-unknown"
           fi
 
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
-          # Extract first tag for attestation
-          FIRST_TAG=$(echo "$TAGS" | cut -d',' -f1)
-          echo "first_tag=$FIRST_TAG" >> $GITHUB_OUTPUT
+          echo "first_tag=$TAGS" >> $GITHUB_OUTPUT
 
       - name: Build Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -103,14 +121,18 @@ jobs:
           tags: ${{ steps.prep.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # Add build args if needed
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
 
       - name: Generate artifact attestation
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && steps.build.outputs.digest
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: ${{ steps.prep.outputs.first_tag }}
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
+        continue-on-error: true
 
   create-release:
     name: Create GitHub Release
