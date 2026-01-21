@@ -66,6 +66,18 @@ CURRENT_STEP=0
 TOTAL_STEPS=16
 IS_STANDALONE=false
 
+# SSL configuration variables (initialized to defaults)
+ENABLE_LETS_ENCRYPT=false
+ENABLE_SSL_REDIRECT=false
+ENABLE_MULTI_DOMAIN=false
+ENABLE_CUSTOM_CERTS=false
+ENABLE_REDIRECT=false
+ENABLE_DEV_CERTS=false
+
+# Installation mode variables
+INSTALL_MODE=""
+INSTALL_MKCERT=false
+
 # Utility functions
 parse_arguments() {
     while [[ $# -gt 0 ]]; do

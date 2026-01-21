@@ -1,0 +1,253 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+NixVM PHP is a complete PHP development and production environment built using Nix for reproducible builds and Docker for containerization. It supports PHP 8.2, 8.3, and 8.4 with MariaDB 10.11 and Caddy 2 web server.
+
+**Key Architecture Principles:**
+- **100% Reproducibility**: Uses NixOS-based Docker images with declarative configuration via `flake.nix`
+- **Development-Production Parity**: Local `nix develop` environment matches container environment exactly
+- **Environment-Aware**: Uses `APP_ENV` variable to switch between development and production configurations
+- **Interactive Setup**: `install.sh` provides comprehensive interactive installation with validation
+
+## Common Commands
+
+### Development Setup
+```bash
+# Enter Nix development shell
+nix develop
+# OR
+nix-shell
+
+# Install PHP dependencies
+composer install
+
+# Complete development setup (Nix + Composer)
+make dev-setup
+
+# Full environment (Nix + Docker services)
+make dev-full
+```
+
+### Docker Operations
+```bash
+# Start all services (uses GitHub Container Registry images)
+docker-compose -f docker-compose.hub.yml up -d
+# OR
+make docker-up
+make start  # alias
+
+# Start with optional services (phpMyAdmin + standalone Caddy)
+docker-compose -f docker-compose.hub.yml --profile phpmyadmin --profile standalone-caddy up -d
+# OR
+make docker-up-all
+
+# View logs
+docker-compose -f docker-compose.hub.yml logs -f
+# OR
+make docker-logs
+
+# Stop all services
+docker-compose -f docker-compose.hub.yml down
+# OR
+make docker-down
+make stop  # alias
+
+# Clean up (remove volumes)
+docker-compose -f docker-compose.hub.yml down -v --remove-orphans
+# OR
+make docker-clean
+```
+
+### Testing and Code Quality
+```bash
+# Run PHPUnit tests
+composer test
+# OR
+make test
+
+# Run PHPStan static analysis
+composer analyze
+# OR
+make lint
+
+# Format code with PHP-CS-Fixer
+composer fix
+# OR
+make format
+
+# Check code formatting
+composer check
+# OR
+make check-format
+
+# Run Nix flake checks
+nix flake check
+# OR
+make nix-test
+
+# Test APP_ENV functionality (dev vs prod modes)
+./test-app-env.sh
+# OR
+make test-app-env
+```
+
+### Single Test Execution
+```bash
+# Run specific test file
+nix develop --command vendor/bin/phpunit tests/YourTest.php
+
+# Run specific test method
+nix develop --command vendor/bin/phpunit --filter testMethodName
+
+# Run with coverage
+composer test:coverage
+```
+
+### Publishing (Maintainers Only)
+```bash
+# Create versioned git tags (triggers CI/CD image builds)
+make publish-patch  # e.g., v1.0.1
+make publish-minor  # e.g., v1.1.0
+make publish-major  # e.g., v2.0.0
+```
+
+## Architecture
+
+### Nix-Based Build System
+- **`flake.nix`**: Primary development environment definition
+  - Defines PHP 8.3 with extensions (pdo_mysql, mysqli, mbstring, curl, gd, zip, intl, opcache, xdebug, imap, imagick)
+  - Configures Xdebug for development (port 9003)
+  - Includes all development tools (git, composer, mariadb client, caddy, docker-compose, etc.)
+  - Environment variables: `PHP_VERSION=8.3`, `COMPOSER_ALLOW_SUPERUSER=1`, `COMPOSER_MEMORY_LIMIT=-1`
+- **`shell.nix`**: Traditional nix-shell compatibility wrapper
+
+### Docker Multi-Image Architecture
+Four NixOS-based images are built and published to GitHub Container Registry (GHCR):
+
+1. **`php-app`** (`Dockerfile.php-app`)
+   - Self-contained PHP application with integrated Caddy routing
+   - Exposes ports 80 (HTTP) and 443 (HTTPS)
+   - Runs supervisord to manage PHP-FPM + Caddy processes
+   - Health check: `http://localhost/health`
+
+2. **`mariadb`** (`Dockerfile.mariadb`)
+   - MariaDB 10.11 database with NixVM configuration
+   - Exposes port 3306
+   - Health check: `mysqladmin ping`
+
+3. **`caddy`** (`Dockerfile.caddy`)
+   - Standalone Caddy web server (optional, for reverse proxy scenarios)
+   - Exposes ports 8080 (HTTP) and 8443 (HTTPS)
+   - Profile: `standalone-caddy` (not started by default)
+
+4. **`phpmyadmin`** (`Dockerfile.phpmyadmin`)
+   - Database management interface
+   - Exposes port 8081
+   - Profile: `phpmyadmin` (not started by default)
+
+### Image Publication
+- GitHub Actions workflow: `.github/workflows/docker-publish.yml`
+- Triggered by: pushes to `main` (latest tags) or git tags `v*.*.*` (versioned tags)
+- Published to: `ghcr.io/btafoya/neovm-php`
+
+### Environment Configuration
+- **Development** (`APP_ENV=development`):
+  - Xdebug enabled
+  - Detailed error reporting
+  - Self-signed SSL certificates for localhost
+  - CORS configured for development
+  - Hot reload enabled
+
+- **Production** (`APP_ENV=production`):
+  - Xdebug disabled
+  - Errors hidden, logged only
+  - Let's Encrypt SSL certificates
+  - Security features enabled
+  - Performance optimizations active
+
+Configuration files:
+- `.env` - Environment variables (generated by `install.sh`, not committed)
+- `.env.example` - Template with defaults
+- `docker/caddy/Caddyfile` - Caddy web server routing
+- `docker/php/php.ini` - PHP runtime settings
+- `docker/php/www.conf` - PHP-FPM pool configuration
+- `docker/mariadb/init.sql` - Database initialization
+
+### Project Structure
+```
+├── flake.nix                    # Nix development environment
+├── shell.nix                    # Traditional nix-shell
+├── Dockerfile.{php-app,mariadb,caddy,phpmyadmin}  # NixOS-based image definitions
+├── docker-compose.hub.yml       # Production compose (GHCR images)
+├── docker-compose.yml           # Local development compose
+├── install.sh                   # Interactive installation script
+├── Makefile                     # Development automation
+├── composer.json                # PHP dependencies and scripts
+├── public/                      # Web-accessible files (index.php)
+├── src/                         # Application source (PSR-4: NixVM\)
+├── tests/                       # PHPUnit tests (PSR-4: NixVM\Tests\)
+└── docker/                      # Docker configurations
+    ├── caddy/                   # Caddyfile
+    ├── php/                     # php.ini, www.conf, Dockerfile
+    ├── mariadb/                 # init.sql
+    ├── phpmyadmin/              # phpMyAdmin config
+    └── supervisord/             # supervisord config for php-app
+```
+
+### Interactive Installation
+The `install.sh` script provides comprehensive setup:
+- **Non-interactive mode**: `./install.sh --non-interactive` (uses defaults)
+- **Interactive mode**: Prompts for all configuration options with validation
+- **One-line installation**: `curl -sSL https://raw.githubusercontent.com/btafoya/neovm-php/main/install.sh | bash`
+- **Custom directory**: `./install.sh --dir /path/to/project`
+
+Configures:
+- Docker Hub/GHCR credentials
+- Application environment (development/production)
+- SSL certificates (Let's Encrypt/custom/self-signed)
+- Database settings
+- PHP configuration
+- Generates `.env`, `docker/caddy/Caddyfile`, and updates `docker-compose.hub.yml`
+
+### Database Access
+Default credentials (development):
+```
+Host: localhost (or 'db' from containers)
+Port: 3306
+Database: nixvm_dev
+User: nixvm_user
+Password: nixvm_pass
+Root Password: rootpassword
+```
+
+### Xdebug Configuration
+- Mode: `develop,debug`
+- Client Host: `127.0.0.1`
+- Client Port: `9003`
+- Start with request: `yes`
+
+### Access Points
+- Main Application: `http://localhost` (port 80)
+- phpMyAdmin: `http://localhost:8081` (with `--profile phpmyadmin`)
+- Standalone Caddy: `http://localhost:8080` (with `--profile standalone-caddy`)
+- Database: `localhost:3306`
+
+## Important Notes
+
+### Development Workflow
+1. **Always use Nix shell for consistency**: `nix develop` ensures identical PHP/tool versions
+2. **Docker Compose profiles**: Optional services (phpMyAdmin, standalone Caddy) require explicit profile activation
+3. **Environment parity**: Local Nix environment matches Docker containers via shared `flake.nix`
+
+### Security
+- **Development**: Passwords in `.env`, self-signed certs, debug enabled
+- **Production**: Use environment variables/secrets, Let's Encrypt certs, set `APP_ENV=production`
+- **Never commit**: `.env`, credentials, or sensitive data
+
+### Troubleshooting
+- **Build errors**: Use `make ci-test` to simulate CI checks locally
+- **Database connection**: Ensure `db` service is healthy before `app`
+- **Port conflicts**: Default ports 80, 443, 3306, 8080, 8081, 8443 must be available
