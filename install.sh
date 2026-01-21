@@ -21,15 +21,6 @@ SCRIPT_VERSION="1.1.0"
 REQUIRED_TOOLS=("curl" "git")
 OPTIONAL_TOOLS=("docker" "docker-compose")
 
-# Check if running interactively (has TTY)
-IS_INTERACTIVE=true
-#if [ ! -t 0 ]; then
-    #IS_INTERACTIVE=false
-#fi
-
-# Non-interactive mode flag
-NON_INTERACTIVE=false
-
 # Default values from .env.example
 DEFAULT_DOCKERHUB_USERNAME="btafoya"
 DEFAULT_PORT="8080"
@@ -87,26 +78,18 @@ parse_arguments() {
                 fi
                 shift 2
                 ;;
-            --non-interactive)
-                NON_INTERACTIVE=true
-                shift
-                ;;
             --help|-h)
                 echo "NixVM Interactive Installer v${SCRIPT_VERSION}"
                 echo ""
                 echo "Usage: $0 [OPTIONS]"
                 echo ""
                 echo "Options:"
-                echo "  --dir PATH           Install to specified directory (creates if needed)"
-                echo "  --non-interactive    Run with default values (no prompts)"
-                echo "  --help, -h           Show this help message"
+                echo "  --dir PATH    Install to specified directory (creates if needed)"
+                echo "  --help, -h    Show this help message"
                 echo ""
                 echo "One-line installation:"
                 echo "  curl -sSL https://raw.githubusercontent.com/btafoya/neovm-php/main/install.sh | bash"
                 echo "  curl -sSL https://raw.githubusercontent.com/btafoya/neovm-php/main/install.sh | bash -s -- --dir /path/to/project"
-                echo ""
-                echo "Non-interactive installation:"
-                echo "  curl -sSL https://raw.githubusercontent.com/btafoya/neovm-php/main/install.sh | bash -s -- --non-interactive"
                 echo ""
                 echo "For forks:"
                 echo "  REPO_URL=https://raw.githubusercontent.com/YOURUSER/yourrepo/branch \\"
@@ -240,69 +223,6 @@ print_info() {
     echo -e "${PURPLE}ℹ️  $1${NC}"
 }
 
-# Safe read function - uses default when non-interactive
-read_with_default() {
-    local prompt="$1"
-    local default="$2"
-    local var_name="$3"
-
-    if [ "$NON_INTERACTIVE" = true ]; then
-        eval "$var_name=\"$default\""
-        print_info "Using default: $default"
-    else
-        read -p "$prompt" input
-        eval "$var_name=\"${input:-$default}\""
-    fi
-}
-
-# Safe read with validation
-read_with_validate() {
-    local prompt="$1"
-    local default="$2"
-    local var_name="$3"
-    local validation_func="$4"
-    local error_msg="$5"
-
-    while true; do
-        if [ "$NON_INTERACTIVE" = true ]; then
-            if eval "$validation_func \"$default\""; then
-                eval "$var_name=\"$default\""
-                print_info "Using default: $default"
-                return 0
-            else
-                print_error "$error_msg"
-                return 1
-            fi
-        else
-            read -p "$prompt" input
-            local value="${input:-$default}"
-            if eval "$validation_func \"$value\""; then
-                eval "$var_name=\"$value\""
-                return 0
-            else
-                print_error "$error_msg"
-            fi
-        fi
-    done
-}
-
-# Safe read with yes/no
-read_yes_no() {
-    local prompt="$1"
-    local default="${2:-N}"
-    local var_name="$3"
-
-    if [ "$NON_INTERACTIVE" = true ]; then
-        eval "$var_name=\"$default\""
-        print_info "Using default: $default"
-    else
-        read -p "$prompt" -n 1 -r
-        echo
-        local value="${REPLY:-$default}"
-        eval "$var_name=\"$value\""
-    fi
-}
-
 # Validation functions
 validate_domain() {
     local domain="$1"
@@ -404,34 +324,29 @@ select_installation_mode() {
     echo "   - Expert mode with all options"
     echo ""
 
-    if [ "$NON_INTERACTIVE" = true ]; then
-        INSTALL_MODE="quick_start"
-        print_success "Selected: Quick Start mode (default in non-interactive)"
-    else
-        while true; do
-            read -p "Enter your choice (1-3): " choice
-            case $choice in
-                1)
-                    INSTALL_MODE="quick_start"
-                    print_success "Selected: Quick Start mode"
-                    break
-                    ;;
-                2)
-                    INSTALL_MODE="docker_only"
-                    print_success "Selected: Docker-Only mode"
-                    break
-                    ;;
-                3)
-                    INSTALL_MODE="advanced"
-                    print_success "Selected: Advanced mode"
-                    break
-                    ;;
-                *)
-                    print_error "Invalid choice. Please enter 1, 2, or 3."
-                    ;;
-            esac
-        done
-    fi
+    while true; do
+        read -p "Enter your choice (1-3): " choice
+        case $choice in
+            1)
+                INSTALL_MODE="quick_start"
+                print_success "Selected: Quick Start mode"
+                break
+                ;;
+            2)
+                INSTALL_MODE="docker_only"
+                print_success "Selected: Docker-Only mode"
+                break
+                ;;
+            3)
+                INSTALL_MODE="advanced"
+                print_success "Selected: Advanced mode"
+                break
+                ;;
+            *)
+                print_error "Invalid choice. Please enter 1, 2, or 3."
+                ;;
+        esac
+    done
 }
 
 configure_docker_hub() {
@@ -458,29 +373,24 @@ configure_app_environment() {
     echo "2) Production (secure, Let's Encrypt SSL available)"
     echo ""
 
-    if [ "$NON_INTERACTIVE" = true ]; then
-        APP_ENV="development"
-        print_success "Selected: Development environment (default)"
-    else
-        while true; do
-            read -p "Choose environment [1]: " choice
-            case ${choice:-1} in
-                1)
-                    APP_ENV="development"
-                    print_success "Selected: Development environment"
-                    break
-                    ;;
-                2)
-                    APP_ENV="production"
-                    print_success "Selected: Production environment"
-                    break
-                    ;;
-                *)
-                    print_error "Invalid choice. Please enter 1 or 2."
-                    ;;
-            esac
-        done
-    fi
+    while true; do
+        read -p "Choose environment [1]: " choice
+        case ${choice:-1} in
+            1)
+                APP_ENV="development"
+                print_success "Selected: Development environment"
+                break
+                ;;
+            2)
+                APP_ENV="production"
+                print_success "Selected: Production environment"
+                break
+                ;;
+            *)
+                print_error "Invalid choice. Please enter 1 or 2."
+                ;;
+        esac
+    done
 }
 
 configure_port_settings() {
@@ -506,54 +416,49 @@ configure_port_settings() {
         DEFAULT_PORT="8080"
     fi
 
-    if [ "$NON_INTERACTIVE" = true ]; then
-        PORT="$DEFAULT_PORT"
-        print_success "Using port: $PORT (default)"
-    else
-        while true; do
-            read -p "Port number [$DEFAULT_PORT]: " input
-            PORT=${input:-$DEFAULT_PORT}
+    while true; do
+        read -p "Port number [$DEFAULT_PORT]: " input
+        PORT=${input:-$DEFAULT_PORT}
 
-            if ! validate_port "$PORT"; then
-                print_error "Invalid port number. Must be between 1-65535."
+        if ! validate_port "$PORT"; then
+            print_error "Invalid port number. Must be between 1-65535."
+            continue
+        fi
+
+        # Check for privileged ports
+        if [ "$PORT" -lt 1024 ]; then
+            print_warning "Port $PORT is privileged (< 1024)."
+            echo "You may need root/administrator privileges to bind to this port."
+            read -p "Continue with port $PORT? [y/N]: " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
                 continue
             fi
+        fi
 
-            # Check for privileged ports
-            if [ "$PORT" -lt 1024 ]; then
-                print_warning "Port $PORT is privileged (< 1024)."
-                echo "You may need root/administrator privileges to bind to this port."
-                read -p "Continue with port $PORT? [y/N]: " -n 1 -r
-                echo
-                if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                    continue
-                fi
+        # Check for common service ports
+        local restricted_ports=(22 25 53 110 143 993 995 3306 5432)
+        local is_restricted=false
+        for restricted_port in "${restricted_ports[@]}"; do
+            if [ "$PORT" -eq "$restricted_port" ]; then
+                is_restricted=true
+                break
             fi
-
-            # Check for common service ports
-            local restricted_ports=(22 25 53 110 143 993 995 3306 5432)
-            local is_restricted=false
-            for restricted_port in "${restricted_ports[@]}"; do
-                if [ "$PORT" -eq "$restricted_port" ]; then
-                    is_restricted=true
-                    break
-                fi
-            done
-
-            if [ "$is_restricted" = true ]; then
-                print_warning "Port $PORT is commonly used by system services."
-                echo "This may cause conflicts."
-                read -p "Use port $PORT anyway? [y/N]: " -n 1 -r
-                echo
-                if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                    continue
-                fi
-            fi
-
-            print_success "Using port: $PORT"
-            break
         done
-    fi
+
+        if [ "$is_restricted" = true ]; then
+            print_warning "Port $PORT is commonly used by system services."
+            echo "This may cause conflicts."
+            read -p "Use port $PORT anyway? [y/N]: " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                continue
+            fi
+        fi
+
+        print_success "Using port: $PORT"
+        break
+    done
 }
 
 configure_ssl_options() {
@@ -572,42 +477,37 @@ configure_ssl_options() {
         echo "4) No SSL (HTTP only - not recommended)"
         echo ""
 
-        if [ "$NON_INTERACTIVE" = true ]; then
-            ENABLE_LETS_ENCRYPT=true
-            configure_ssl_details
-        else
-            while true; do
-                read -p "Choose SSL option [1]: " choice
-                case ${choice:-1} in
-                    1)
-                        ENABLE_LETS_ENCRYPT=true
-                        configure_ssl_details
-                        break
-                        ;;
-                    2)
-                        ENABLE_LETS_ENCRYPT=false
-                        ENABLE_CUSTOM_CERTS=true
-                        configure_custom_certificates
-                        break
-                        ;;
-                    3)
-                        ENABLE_LETS_ENCRYPT=false
-                        ENABLE_CUSTOM_CERTS=false
-                        print_warning "Using self-signed certificates"
-                        break
-                        ;;
-                    4)
-                        ENABLE_LETS_ENCRYPT=false
-                        ENABLE_CUSTOM_CERTS=false
-                        print_warning "No SSL - application will use HTTP only"
-                        break
-                        ;;
-                    *)
-                        print_error "Invalid choice. Please enter 1-4."
-                        ;;
-                esac
-            done
-        fi
+        while true; do
+            read -p "Choose SSL option [1]: " choice
+            case ${choice:-1} in
+                1)
+                    ENABLE_LETS_ENCRYPT=true
+                    configure_ssl_details
+                    break
+                    ;;
+                2)
+                    ENABLE_LETS_ENCRYPT=false
+                    ENABLE_CUSTOM_CERTS=true
+                    configure_custom_certificates
+                    break
+                    ;;
+                3)
+                    ENABLE_LETS_ENCRYPT=false
+                    ENABLE_CUSTOM_CERTS=false
+                    print_warning "Using self-signed certificates"
+                    break
+                    ;;
+                4)
+                    ENABLE_LETS_ENCRYPT=false
+                    ENABLE_CUSTOM_CERTS=false
+                    print_warning "No SSL - application will use HTTP only"
+                    break
+                    ;;
+                *)
+                    print_error "Invalid choice. Please enter 1-4."
+                    ;;
+            esac
+        done
     else
         echo "Development mode - using self-signed certificates (normal for development)"
         ENABLE_LETS_ENCRYPT=false
@@ -619,36 +519,26 @@ configure_ssl_details() {
     print_step "📋 Let's Encrypt SSL Details"
 
     # Domain validation
-    if [ "$NON_INTERACTIVE" = true ]; then
-        DOMAIN="localhost"
-        print_info "Using default domain: localhost"
-    else
-        while true; do
-            read -p "Domain name: " input
-            if validate_domain "$input"; then
-                DOMAIN="$input"
-                break
-            else
-                print_error "Invalid domain format. Please try again."
-            fi
-        done
-    fi
+    while true; do
+        read -p "Domain name: " input
+        if validate_domain "$input"; then
+            DOMAIN="$input"
+            break
+        else
+            print_error "Invalid domain format. Please try again."
+        fi
+    done
 
     # Email validation
-    if [ "$NON_INTERACTIVE" = true ]; then
-        SSL_EMAIL="admin@localhost"
-        print_info "Using default email: admin@localhost"
-    else
-        while true; do
-            read -p "Email for SSL certificates: " input
-            if validate_email "$input"; then
-                SSL_EMAIL="$input"
-                break
-            else
-                print_error "Invalid email format. Please try again."
-            fi
-        done
-    fi
+    while true; do
+        read -p "Email for SSL certificates: " input
+        if validate_email "$input"; then
+            SSL_EMAIL="$input"
+            break
+        else
+            print_error "Invalid email format. Please try again."
+        fi
+    done
 
     # Multi-domain support
     configure_multi_domain_ssl
@@ -662,30 +552,25 @@ configure_multi_domain_ssl() {
     echo "Let's Encrypt supports multiple domains on one certificate."
     echo ""
 
-    if [ "$NON_INTERACTIVE" = true ]; then
-        print_info "Skipping additional domains (non-interactive mode)"
+    read -p "Add additional domains? [y/N]: " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "Enter additional domains (one per line, empty line to finish):"
         ADDITIONAL_DOMAINS=()
-    else
-        read -p "Add additional domains? [y/N]: " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            echo "Enter additional domains (one per line, empty line to finish):"
-            ADDITIONAL_DOMAINS=()
 
-            while true; do
-                read -p "Domain: " additional_domain
-                if [ -z "$additional_domain" ]; then
-                    break
-                fi
+        while true; do
+            read -p "Domain: " additional_domain
+            if [ -z "$additional_domain" ]; then
+                break
+            fi
 
-                if validate_domain "$additional_domain"; then
-                    ADDITIONAL_DOMAINS+=("$additional_domain")
-                    print_success "Added: $additional_domain"
-                else
-                    print_error "Invalid domain format, try again"
-                fi
-            done
-        fi
+            if validate_domain "$additional_domain"; then
+                ADDITIONAL_DOMAINS+=("$additional_domain")
+                print_success "Added: $additional_domain"
+            else
+                print_error "Invalid domain format, try again"
+            fi
+        done
     fi
 }
 
@@ -693,44 +578,38 @@ configure_custom_certificates() {
     print_step "📁 Custom Certificate Configuration"
 
     # SSL Certificate path
-    if [ "$NON_INTERACTIVE" = true ]; then
-        SSL_CERT_PATH="/etc/ssl/certs/ssl-cert.crt"
-        SSL_KEY_PATH="/etc/ssl/private/ssl-cert.key"
-        print_info "Using default certificate paths"
-    else
-        while true; do
-            read -p "SSL Certificate file path: " input
-            if [ -f "$input" ]; then
-                SSL_CERT_PATH="$input"
-                break
-            else
-                print_error "Certificate file not found: $input"
-                read -p "Create file now? [y/N]: " -n 1 -r
-                echo
-                if [[ $REPLY =~ ^[Yy]$ ]]; then
-                    print_info "Please create your certificate file and try again."
-                    read -p "Press Enter to continue... "
-                fi
+    while true; do
+        read -p "SSL Certificate file path: " input
+        if [ -f "$input" ]; then
+            SSL_CERT_PATH="$input"
+            break
+        else
+            print_error "Certificate file not found: $input"
+            read -p "Create file now? [y/N]: " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                print_info "Please create your certificate file and try again."
+                read -p "Press Enter to continue... "
             fi
-        done
+        fi
+    done
 
-        # Private key path
-        while true; do
-            read -p "Private key file path: " input
-            if [ -f "$input" ]; then
-                SSL_KEY_PATH="$input"
-                break
-            else
-                print_error "Key file not found: $input"
-                read -p "Create file now? [y/N]: " -n 1 -r
-                echo
-                if [[ $REPLY =~ ^[Yy]$ ]]; then
-                    print_info "Please create your private key file and try again."
-                    read -p "Press Enter to continue... "
-                fi
+    # Private key path
+    while true; do
+        read -p "Private key file path: " input
+        if [ -f "$input" ]; then
+            SSL_KEY_PATH="$input"
+            break
+        else
+            print_error "Key file not found: $input"
+            read -p "Create file now? [y/N]: " -n 1 -r
+            echo
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                print_info "Please create your private key file and try again."
+                read -p "Press Enter to continue... "
             fi
-        done
-    fi
+        fi
+    done
 
     print_success "Custom certificates configured"
 }
@@ -744,29 +623,23 @@ configure_ssl_redirect() {
         echo "This prevents mixed content issues and ensures encrypted connections."
         echo ""
 
-        if [ "$NON_INTERACTIVE" = true ]; then
+        read -p "Enable automatic HTTP→HTTPS redirect? [Y/n]: " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
             ENABLE_REDIRECT=true
-            REDIRECT_PORT="80"
-            print_success "HTTP→HTTPS redirect enabled (port 80 → $PORT) (default)"
-        else
-            read -p "Enable automatic HTTP→HTTPS redirect? [Y/n]: " -n 1 -r
-            echo
-            if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-                ENABLE_REDIRECT=true
 
-                # Configure redirect port
-                if [ "$PORT" = "443" ]; then
-                    REDIRECT_PORT="80"
-                else
-                    read -p "HTTP redirect port [80]: " input
-                    REDIRECT_PORT=${input:-80}
-                fi
-
-                print_success "HTTP→HTTPS redirect enabled (port $REDIRECT_PORT → $PORT)"
+            # Configure redirect port
+            if [ "$PORT" = "443" ]; then
+                REDIRECT_PORT="80"
             else
-                ENABLE_REDIRECT=false
-                print_warning "HTTP→HTTPS redirect disabled"
+                read -p "HTTP redirect port [80]: " input
+                REDIRECT_PORT=${input:-80}
             fi
+
+            print_success "HTTP→HTTPS redirect enabled (port $REDIRECT_PORT → $PORT)"
+        else
+            ENABLE_REDIRECT=false
+            print_warning "HTTP→HTTPS redirect disabled"
         fi
     fi
 }
@@ -780,18 +653,13 @@ configure_development_ssl() {
         echo "Alternative: Proper development certificates with mkcert"
         echo ""
 
-        if [ "$NON_INTERACTIVE" = true ]; then
-            ENABLE_DEV_CERTS=false
-            print_info "Skipping dev certificate setup (non-interactive mode)"
+        read -p "Set up proper dev certificates? [y/N]: " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            ENABLE_DEV_CERTS=true
+            setup_dev_certificates
         else
-            read -p "Set up proper dev certificates? [y/N]: " -n 1 -r
-            echo
-            if [[ $REPLY =~ ^[Yy]$ ]]; then
-                ENABLE_DEV_CERTS=true
-                setup_dev_certificates
-            else
-                ENABLE_DEV_CERTS=false
-            fi
+            ENABLE_DEV_CERTS=false
         fi
     fi
 }
@@ -821,16 +689,11 @@ setup_mkcert() {
     # Check if mkcert is available in Nix
     if nix eval nixpkgs#mkcert --json >/dev/null 2>&1; then
         echo "✅ mkcert available in Nixpkgs"
-        if [ "$NON_INTERACTIVE" = true ]; then
-            INSTALL_MKCERT=false
-            print_info "Skipping mkcert installation (non-interactive mode)"
-        else
-            read -p "Auto-install mkcert in Nix environment? [Y/n]: " -n 1 -r
-            echo
-            if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-                INSTALL_MKCERT=true
-                print_success "mkcert will be added to your development environment"
-            fi
+        read -p "Auto-install mkcert in Nix environment? [Y/n]: " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            INSTALL_MKCERT=true
+            print_success "mkcert will be added to your development environment"
         fi
     else
         print_warning "mkcert not in current Nixpkgs"
@@ -843,22 +706,13 @@ setup_mkcert() {
     echo "2. Create certs: mkcert -install && mkcert localhost"
     echo "3. Mount in docker-compose.yml"
     echo ""
-
-    if [ "$NON_INTERACTIVE" = true ]; then
-        print_info "Continuing..."
-    else
-        read -p "ℹ️ Press Enter when ready to continue... "
-    fi
+    read -p "ℹ️ Press Enter when ready to continue... "
 }
 
 setup_custom_ca() {
     print_info "Custom CA setup requires manual configuration."
     print_info "Please refer to SSL documentation for your platform."
-    if [ "$NON_INTERACTIVE" = true ]; then
-        print_info "Continuing..."
-    else
-        read -p "ℹ️ Press Enter to continue... "
-    fi
+    read -p "ℹ️ Press Enter to continue... "
 }
 
 configure_proxy_guidance() {
@@ -901,11 +755,7 @@ configure_proxy_guidance() {
         echo "   }"
         echo ""
 
-        if [ "$NON_INTERACTIVE" = true ]; then
-            print_info "Continuing..."
-        else
-            read -p "ℹ️ Press Enter when ready to continue... "
-        fi
+        read -p "ℹ️ Press Enter when ready to continue... "
     fi
 }
 
@@ -928,11 +778,7 @@ configure_ssl_persistence() {
         echo "   No manual certificate management required."
         echo ""
 
-        if [ "$NON_INTERACTIVE" = true ]; then
-            print_info "Continuing..."
-        else
-            read -p "ℹ️ Press Enter to continue... "
-        fi
+        read -p "ℹ️ Press Enter to continue... "
     fi
 }
 
@@ -947,11 +793,7 @@ configure_ssl_renewal_info() {
         echo "• Renewal notifications sent to: $SSL_EMAIL"
         echo ""
 
-        if [ "$NON_INTERACTIVE" = true ]; then
-            print_info "Continuing..."
-        else
-            read -p "ℹ️ Press Enter to continue... "
-        fi
+        read -p "ℹ️ Press Enter to continue... "
     fi
 }
 
@@ -961,25 +803,17 @@ configure_database() {
 
     print_step "🐬 Database Configuration"
 
-    if [ "$NON_INTERACTIVE" = true ]; then
-        MYSQL_ROOT_PASSWORD="$DEFAULT_MYSQL_ROOT_PASSWORD"
-        MYSQL_DATABASE="$DEFAULT_MYSQL_DATABASE"
-        MYSQL_USER="$DEFAULT_MYSQL_USER"
-        MYSQL_PASSWORD="$DEFAULT_MYSQL_PASSWORD"
-        print_info "Using default database settings"
-    else
-        read -p "Root password [rootpassword]: " input
-        MYSQL_ROOT_PASSWORD=${input:-rootpassword}
+    read -p "Root password [rootpassword]: " input
+    MYSQL_ROOT_PASSWORD=${input:-rootpassword}
 
-        read -p "Database name [nixvm_dev]: " input
-        MYSQL_DATABASE=${input:-nixvm_dev}
+    read -p "Database name [nixvm_dev]: " input
+    MYSQL_DATABASE=${input:-nixvm_dev}
 
-        read -p "Username [nixvm_user]: " input
-        MYSQL_USER=${input:-nixvm_user}
+    read -p "Username [nixvm_user]: " input
+    MYSQL_USER=${input:-nixvm_user}
 
-        read -p "Password [nixvm_pass]: " input
-        MYSQL_PASSWORD=${input:-nixvm_pass}
-    fi
+    read -p "Password [nixvm_pass]: " input
+    MYSQL_PASSWORD=${input:-nixvm_pass}
 
     print_success "Database configuration complete"
 }
@@ -996,38 +830,32 @@ configure_php_version() {
     echo "3) PHP 8.2 (Stable)"
     echo ""
 
-    if [ "$NON_INTERACTIVE" = true ]; then
-        PHP_VERSION="8.4"
-        PHP_PACKAGE="php84"
-        print_success "Selected: PHP 8.4 (default)"
-    else
-        while true; do
-            read -p "Choose PHP version [1]: " choice
-            case ${choice:-1} in
-                1)
-                    PHP_VERSION="8.4"
-                    PHP_PACKAGE="php84"
-                    print_success "Selected: PHP 8.4"
-                    break
-                    ;;
-                2)
-                    PHP_VERSION="8.3"
-                    PHP_PACKAGE="php83"
-                    print_success "Selected: PHP 8.3"
-                    break
-                    ;;
-                3)
-                    PHP_VERSION="8.2"
-                    PHP_PACKAGE="php82"
-                    print_success "Selected: PHP 8.2"
-                    break
-                    ;;
-                *)
-                    print_error "Invalid choice. Please enter 1, 2, or 3."
-                    ;;
-            esac
-        done
-    fi
+    while true; do
+        read -p "Choose PHP version [1]: " choice
+        case ${choice:-1} in
+            1)
+                PHP_VERSION="8.4"
+                PHP_PACKAGE="php84"
+                print_success "Selected: PHP 8.4"
+                break
+                ;;
+            2)
+                PHP_VERSION="8.3"
+                PHP_PACKAGE="php83"
+                print_success "Selected: PHP 8.3"
+                break
+                ;;
+            3)
+                PHP_VERSION="8.2"
+                PHP_PACKAGE="php82"
+                print_success "Selected: PHP 8.2"
+                break
+                ;;
+            *)
+                print_error "Invalid choice. Please enter 1, 2, or 3."
+                ;;
+        esac
+    done
 
     update_php_version_in_files
 }
@@ -1061,26 +889,19 @@ configure_php() {
 
     print_step "🐘 PHP Configuration"
 
-    if [ "$NON_INTERACTIVE" = true ]; then
-        PHP_MEMORY_LIMIT="$DEFAULT_PHP_MEMORY_LIMIT"
-        PHP_UPLOAD_MAX_FILESIZE="$DEFAULT_PHP_UPLOAD_MAX_FILESIZE"
-        PHP_POST_MAX_SIZE="$DEFAULT_PHP_POST_MAX_SIZE"
-        print_info "Using default PHP settings"
-    else
-        read -p "Memory limit [256M]: " input
-        PHP_MEMORY_LIMIT=${input:-256M}
+    read -p "Memory limit [256M]: " input
+    PHP_MEMORY_LIMIT=${input:-256M}
 
-        if ! validate_memory "$PHP_MEMORY_LIMIT"; then
-            print_error "Invalid memory format. Using default: 256M"
-            PHP_MEMORY_LIMIT="256M"
-        fi
-
-        read -p "Upload max filesize [100M]: " input
-        PHP_UPLOAD_MAX_FILESIZE=${input:-100M}
-
-        read -p "Post max size [100M]: " input
-        PHP_POST_MAX_SIZE=${input:-100M}
+    if ! validate_memory "$PHP_MEMORY_LIMIT"; then
+        print_error "Invalid memory format. Using default: 256M"
+        PHP_MEMORY_LIMIT="256M"
     fi
+
+    read -p "Upload max filesize [100M]: " input
+    PHP_UPLOAD_MAX_FILESIZE=${input:-100M}
+
+    read -p "Post max size [100M]: " input
+    PHP_POST_MAX_SIZE=${input:-100M}
 
     print_success "PHP configuration complete"
 }
@@ -1091,17 +912,11 @@ configure_composer() {
 
     print_step "📦 Composer Configuration"
 
-    if [ "$NON_INTERACTIVE" = true ]; then
-        COMPOSER_ALLOW_SUPERUSER="$DEFAULT_COMPOSER_ALLOW_SUPERUSER"
-        COMPOSER_MEMORY_LIMIT="$DEFAULT_COMPOSER_MEMORY_LIMIT"
-        print_info "Using default Composer settings"
-    else
-        read -p "Allow superuser [1]: " input
-        COMPOSER_ALLOW_SUPERUSER=${input:-1}
+    read -p "Allow superuser [1]: " input
+    COMPOSER_ALLOW_SUPERUSER=${input:-1}
 
-        read -p "Memory limit [-1]: " input
-        COMPOSER_MEMORY_LIMIT=${input:-"-1"}
-    fi
+    read -p "Memory limit [-1]: " input
+    COMPOSER_MEMORY_LIMIT=${input:-"-1"}
 
     print_success "Composer configuration complete"
 }
@@ -1150,17 +965,12 @@ show_configuration_summary() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
-    if [ "$NON_INTERACTIVE" = true ]; then
-        print_info "Proceeding with default configuration..."
-        return 0
-    else
-        read -p "✅ Proceed with this configuration? [Y/n]: " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Nn]$ ]]; then
-            print_info "Restarting configuration..."
-            main_configuration
-            return 1
-        fi
+    read -p "✅ Proceed with this configuration? [Y/n]: " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Nn]$ ]]; then
+        print_info "Restarting configuration..."
+        main_configuration
+        return 1
     fi
 
     return 0
@@ -1251,9 +1061,8 @@ generate_php_config() {
     cat > "$config_file" << EOF
 [PHP]
 
-;;;;;;;;;;;;;;;;;;;
-; About php.ini   ;
-;;;;;;;;;;;;;;;;;;;
+; using ; about php.ini   ;
+; using ;
 
 engine = On
 short_open_tag = Off
@@ -1270,17 +1079,15 @@ zend.exception_ignore_args = Off
 zend.exception_string_param_max_len = 0
 expose_php = $(if [ "$environment" = "production" ]; then echo "Off"; else echo "On"; fi)
 
-;;;;;;;;;;;;;;;;;
-; Resource Limits ;
-;;;;;;;;;;;;;;;;;
+; using ; Resource Limits ;
+; using ;
 
 max_execution_time = $(if [ "$environment" = "production" ]; then echo "60"; else echo "300"; fi)
 max_input_time = 60
 memory_limit = $PHP_MEMORY_LIMIT
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Error handling and logging ;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; using ; Error handling and logging ;
+; using ;
 
 error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT
 display_errors = $(if [ "$environment" = "production" ]; then echo "Off"; else echo "On"; fi)
@@ -1293,11 +1100,10 @@ report_memleaks = $(if [ "$environment" = "production" ]; then echo "Off"; else 
 track_errors = $(if [ "$environment" = "production" ]; then echo "Off"; else echo "On"; fi)
 html_errors = $(if [ "$environment" = "production" ]; then echo "Off"; else echo "On"; fi)
 
-;;;;;;;;;;;;;;;;;
-; Data Handling ;
-;;;;;;;;;;;;;;;;;
+; using ; Data Handling ;
+; using ;
 
-arg_separator.output = "&amp;"
+arg_separator.output = "& using ;"
 arg_separator.input = ";&"
 variables_order = "EGPCS"
 request_order = "GP"
@@ -1312,9 +1118,8 @@ internal_encoding =
 input_encoding =
 output_encoding =
 
-;;;;;;;;;;;;;;;;;;;;;;;;;
-; Paths and Directories ;
-;;;;;;;;;;;;;;;;;;;;;;;;;
+; using ; Paths and Directories ;
+; using ;
 
 doc_root =
 user_dir =
@@ -1327,15 +1132,13 @@ allow_url_fopen = $(if [ "$environment" = "production" ]; then echo "Off"; else 
 allow_url_include = Off
 default_socket_timeout = 60
 
-;;;;;;;;;;;;;;;;;
-; File Uploads ;
-;;;;;;;;;;;;;;;;;
+; using ; File Uploads ;
+; using ;
 
 upload_tmp_dir =
 
-;;;;;;;;;;;;;;;;;;
-; Fopen wrappers ;
-;;;;;;;;;;;;;;;;;;
+; using ; Fopen wrappers ;
+; using ;
 
 extension=gd
 extension=mbstring
@@ -1345,9 +1148,8 @@ extension=zip
 extension=imap
 extension=imagick
 
-;;;;;;;;;;;;;;;;;;;
-; Module Settings ;
-;;;;;;;;;;;;;;;;;;;
+; using ; Module Settings ;
+; using ;
 
 [CLI Server]
 cli_server.color = On
@@ -1697,12 +1499,6 @@ show_completion_message() {
 main() {
     parse_arguments "$@"
 
-    # Auto-detect non-interactive mode if no TTY
-    if [ "$IS_INTERACTIVE" = false ] && [ "$NON_INTERACTIVE" = false ]; then
-        print_warning "No TTY detected - switching to non-interactive mode with defaults"
-        NON_INTERACTIVE=true
-    fi
-
     change_to_install_dir
 
     check_and_download_files
@@ -1734,35 +1530,7 @@ main() {
 }
 
 main_configuration() {
-    if [ "$NON_INTERACTIVE" = true ]; then
-        use_defaults
-    else
-        select_installation_mode
-        configure_app_environment
-        configure_port_settings
-        configure_ssl_options
-        configure_ssl_redirect
-        configure_development_ssl
-        configure_ssl_persistence
-        configure_ssl_renewal_info
-        configure_proxy_guidance
-        configure_database
-        configure_php_version
-        configure_php
-        configure_composer
-    fi
-
-    if ! show_configuration_summary; then
-        return 1
-    fi
-}
-
-use_defaults() {
-    print_step "Using default configuration (non-interactive mode)"
-
-    INSTALL_MODE="quick_start"
-    print_success "Installation mode: Quick Start"
-
+    select_installation_mode
     configure_docker_hub
     configure_app_environment
     configure_port_settings
@@ -1776,6 +1544,10 @@ use_defaults() {
     configure_php_version
     configure_php
     configure_composer
+
+    if ! show_configuration_summary; then
+        return 1
+    fi
 }
 
 # Run main function
