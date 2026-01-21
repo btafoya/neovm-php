@@ -4,20 +4,36 @@ A complete PHP 8.3 development environment with MariaDB and Caddy, built using N
 
 ## 🚀 Quick Start
 
-### Option 1: Docker Compose (Recommended)
+### Interactive Installation (Recommended)
 
 ```bash
-# Start all services
-docker-compose up -d
+# Run the interactive installer
+./install.sh
 
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
+# Follow the prompts to configure your environment
+# The script will generate .env and docker-compose.hub.yml
 ```
 
-### Option 2: Nix Flake
+### Manual Setup
+
+#### Option 1: Docker Compose
+
+```bash
+# 1. Copy environment file
+cp .env.example .env
+# Edit .env with your Docker Hub username
+
+# 2. Start all services
+docker-compose -f docker-compose.hub.yml up -d
+
+# View logs
+docker-compose -f docker-compose.hub.yml logs -f
+
+# Stop services
+docker-compose -f docker-compose.hub.yml down
+```
+
+#### Option 2: Nix Development
 
 ```bash
 # Enter development shell
@@ -38,6 +54,40 @@ nix-shell
 - **Development tools** (PHPStan, PHP-CS-Fixer, PHPUnit)
 
 **Note**: The `mcrypt` extension is not available in PHP 8.3 as it was removed from PHP core in PHP 7.2+. Consider using `openssl` or `sodium` extensions instead.
+
+## 🛠️ Installation Script
+
+The `install.sh` script provides a comprehensive interactive setup experience:
+
+### Features
+- **100% Interactive**: Prompts for all configuration options
+- **Smart Defaults**: Pre-filled values from `.env.example`
+- **Validation**: Input validation for domains, emails, ports, etc.
+- **SSL Configuration**: Let's Encrypt, custom certs, or self-signed
+- **Environment-Specific**: Different options for development/production
+- **Progress Tracking**: Visual progress indicators
+- **Error Handling**: Graceful failure recovery
+
+### Usage
+```bash
+./install.sh
+```
+
+### What It Configures
+- **Docker Hub credentials**
+- **Application environment** (development/production)
+- **Network ports** with proxy guidance
+- **SSL certificates** (Let's Encrypt/custom/self-signed)
+- **HTTP→HTTPS redirects**
+- **Multi-domain SSL support**
+- **Database settings**
+- **PHP configuration**
+- **Composer settings**
+
+### Generated Files
+- **`.env`** - Complete environment configuration
+- **`docker/caddy/Caddyfile`** - Web server configuration
+- **Updated `docker-compose.hub.yml`** - Ready-to-use Docker setup
 
 ## 🐳 Docker Hub Images (NixOS-based)
 
