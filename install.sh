@@ -59,6 +59,9 @@ REPO_FILES=(
     "docker/caddy/Caddyfile"
     "docker/php/www.conf"
     "docker/mariadb/init.sql"
+    "Dockerfile.php-app"
+    "flake.nix"
+    "flake.lock"
 )
 
 # Progress tracking
@@ -323,17 +326,14 @@ select_installation_mode() {
     echo ""
     print_step "Choose Installation Mode"
     echo ""
-    echo "1) 🚀 Quick Start (Recommended)"
-    echo "   - Guided setup with sensible defaults"
-    echo "   - All components with user choices"
+    echo "1) Quick Start (Recommended)"
+    echo "   Guided setup with defaults for most settings"
     echo ""
-    echo "2) 🐳 Docker-Only Setup"
-    echo "   - Container deployment only"
-    echo "   - Skip Nix environment setup"
+    echo "2) Docker-Only Setup"
+    echo "   Containers only, skip Nix environment"
     echo ""
-    echo "3) 🔧 Advanced Configuration"
-    echo "   - Full control over all settings"
-    echo "   - Expert mode with all options"
+    echo "3) Advanced Configuration"
+    echo "   Full control over all settings"
     echo ""
 
     while true; do
@@ -631,8 +631,7 @@ configure_ssl_redirect() {
         echo ""
         print_step "🔄 HTTP to HTTPS Redirect"
 
-        echo "Automatically redirect all HTTP traffic to HTTPS for security."
-        echo "This prevents mixed content issues and ensures encrypted connections."
+        echo "Redirect HTTP traffic to HTTPS automatically."
         echo ""
 
         read -r -n 1 -p "Enable automatic HTTP→HTTPS redirect? [Y/n]: " REPLY || REPLY="Y"
@@ -693,9 +692,9 @@ setup_dev_certificates() {
 }
 
 setup_mkcert() {
-    echo "🐳 mkcert Setup:"
+    echo "mkcert Setup:"
     echo ""
-    echo "mkcert creates locally-trusted development certificates."
+    echo "mkcert creates locally-trusted certificates for development."
     echo ""
 
     if nix eval nixpkgs#mkcert --json >/dev/null 2>&1; then
@@ -731,7 +730,7 @@ configure_proxy_guidance() {
         echo ""
         print_step "🌐 Proxy Server Integration"
 
-        echo "Since you're using port $PORT, you may want to set up a reverse proxy."
+        echo "You're using port $PORT. To serve on standard ports (80/443), set up a reverse proxy."
         echo ""
 
         # Nginx configuration
@@ -785,8 +784,7 @@ configure_ssl_persistence() {
         echo "     alpine tar czf backup.tar.gz -C /data ."
         echo ""
 
-        echo "🔄 Certificate auto-renewal is handled by Caddy."
-        echo "   No manual certificate management required."
+        echo "Caddy handles certificate renewal automatically."
         echo ""
 
         read -r -p "ℹ️ Press Enter to continue... " || true
@@ -798,10 +796,9 @@ configure_ssl_renewal_info() {
         echo ""
         print_step "🔄 SSL Certificate Renewal"
 
-        echo "• Let's Encrypt certificates auto-renew every 90 days"
-        echo "• Caddy handles renewal automatically in the background"
-        echo "• No manual intervention required"
-        echo "• Renewal notifications sent to: $SSL_EMAIL"
+        echo "Let's Encrypt certificates renew automatically every 90 days."
+        echo "Caddy handles this in the background."
+        echo "Renewal notifications go to: $SSL_EMAIL"
         echo ""
 
         read -r -p "ℹ️ Press Enter to continue... " || true
@@ -813,16 +810,27 @@ configure_database() {
     show_progress $CURRENT_STEP "Configuring database"
 
     print_step "🐬 Database Configuration"
+    echo ""
+    echo "Configure your MariaDB database credentials."
+    echo "These will be used to set up the database container."
+    echo ""
 
+    echo "Enter MySQL root password (default: rootpassword):"
     read -r input || input=""
     MYSQL_ROOT_PASSWORD=${input:-rootpassword}
 
+    echo ""
+    echo "Enter database name (default: nixvm_dev):"
     read -r input || input=""
     MYSQL_DATABASE=${input:-nixvm_dev}
 
+    echo ""
+    echo "Enter database username (default: nixvm_user):"
     read -r input || input=""
     MYSQL_USER=${input:-nixvm_user}
 
+    echo ""
+    echo "Enter database password for $MYSQL_USER (default: nixvm_pass):"
     read -r input || input=""
     MYSQL_PASSWORD=${input:-nixvm_pass}
 
@@ -899,20 +907,42 @@ configure_php() {
     show_progress $CURRENT_STEP "Configuring PHP"
 
     print_step "🐘 PHP Configuration"
+    echo ""
+    echo "Configure PHP runtime settings for your environment."
+    echo "Memory values must include unit suffix (M for MB, G for GB)."
+    echo ""
 
-    read -r input || input=""
-    PHP_MEMORY_LIMIT=${input:-256M}
+    while true; do
+        echo "Enter PHP memory limit (default: 256M):"
+        read -r input || input=""
+        PHP_MEMORY_LIMIT=${input:-256M}
 
-    if ! validate_memory "$PHP_MEMORY_LIMIT"; then
-        print_error "Invalid memory format. Using default: 256M"
-        PHP_MEMORY_LIMIT="256M"
-    fi
+        if validate_memory "$PHP_MEMORY_LIMIT"; then
+            break
+        else
+            print_error "Invalid memory format. Must be a number followed by M or G (e.g., 256M, 1G)"
+        fi
+    done
 
+    echo ""
+    echo "Enter maximum file upload size (default: 100M):"
     read -r input || input=""
     PHP_UPLOAD_MAX_FILESIZE=${input:-100M}
 
+    if ! validate_memory "$PHP_UPLOAD_MAX_FILESIZE"; then
+        print_warning "Invalid format. Using default: 100M"
+        PHP_UPLOAD_MAX_FILESIZE="100M"
+    fi
+
+    echo ""
+    echo "Enter maximum POST data size (default: 100M):"
     read -r input || input=""
     PHP_POST_MAX_SIZE=${input:-100M}
+
+    if ! validate_memory "$PHP_POST_MAX_SIZE"; then
+        print_warning "Invalid format. Using default: 100M"
+        PHP_POST_MAX_SIZE="100M"
+    fi
 
     print_success "PHP configuration complete"
 }
@@ -922,10 +952,24 @@ configure_composer() {
     show_progress $CURRENT_STEP "Configuring Composer"
 
     print_step "📦 Composer Configuration"
+    echo ""
+    echo "Configure Composer PHP dependency manager settings."
+    echo ""
 
+    echo "Allow Composer to run as superuser?"
+    echo "1 = Yes (required for Docker containers)"
+    echo "0 = No"
+    echo ""
+    echo "Enter value (default: 1):"
     read -r input || input=""
     COMPOSER_ALLOW_SUPERUSER=${input:-1}
 
+    echo ""
+    echo "Composer memory limit:"
+    echo "  -1  = Unlimited (recommended)"
+    echo "  512M, 1G, etc. = Specific limit"
+    echo ""
+    echo "Enter value (default: -1):"
     read -r input || input=""
     COMPOSER_MEMORY_LIMIT=${input:--1}
 
@@ -1464,9 +1508,9 @@ show_completion_message() {
 
     print_success "🎉 Installation Complete!"
     echo ""
-    echo "🚀 Your NixVM development environment is ready!"
+    echo "Your NixVM development environment is ready."
     echo ""
-    echo "📖 Quick Start Guide:"
+    echo "Quick Start:"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "1. Start the environment:"
     echo "   docker-compose -f docker-compose.hub.yml up -d"
@@ -1481,29 +1525,29 @@ show_completion_message() {
     echo "   • phpMyAdmin: http://localhost:8081"
     echo "   • Direct: localhost:3306"
     echo ""
-    echo "🔧 Useful Commands:"
+    echo "Useful commands:"
     echo "   • View logs: docker-compose -f docker-compose.hub.yml logs -f"
     echo "   • Stop: docker-compose -f docker-compose.hub.yml down"
     echo "   • Nix dev: nix develop"
     echo ""
-    echo "📚 Documentation:"
+    echo "Documentation:"
     echo "   • README.md - Complete usage guide"
     echo "   • .env - Your configuration"
     echo "   • docker-compose.hub.yml - Docker setup"
     echo ""
     if [ "$ENABLE_LETS_ENCRYPT" = true ]; then
-        echo "🔒 SSL Notes:"
+        echo "SSL notes:"
         echo "   • Certificates auto-renew every 90 days"
         echo "   • Backup volumes: nixvm_caddy_data, nixvm_caddy_config"
         echo ""
     fi
 
-    echo "💡 Next Steps:"
+    echo "Next steps:"
     echo "   1. Run 'composer install' in nix develop"
     echo "   2. Start coding your PHP application"
     echo "   3. Push to main branch to publish Docker images"
     echo ""
-    print_success "Happy coding with NixVM! 🚀"
+    print_success "Installation complete!"
 }
 
 # Main installation flow
