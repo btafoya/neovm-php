@@ -39,4 +39,4 @@ gh repo edit \
 echo "✅ Repository description and tags added successfully!"
 echo ""
 echo "📊 Repository info:"
-gh repo view --json description,topics
+gh repo view --json description,repositoryTopics
