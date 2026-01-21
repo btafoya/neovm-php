@@ -1,0 +1,58 @@
+# NixOS-based PHP Application with Caddy Routing
+FROM nixos/nix:latest AS builder
+
+# Enable experimental features for flakes
+RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+
+# Copy Nix configuration files
+COPY flake.nix flake.lock shell.nix composer.json composer.lock ./
+
+# Copy source code for build context
+COPY src/ ./src/
+COPY public/ ./public/
+COPY tests/ ./tests/
+
+# Build PHP environment using the existing flake
+RUN nix build .#packages.x86_64-linux.php83 --out-link /tmp/php-build
+
+# Install Composer dependencies (production optimized)
+RUN nix develop .#devShells.x86_64-linux.default --command "composer install --no-dev --optimize-autoloader --no-interaction"
+
+# Runtime stage
+FROM nixos/nix:latest
+
+# Install runtime dependencies via Nix
+RUN nix-env -iA nixpkgs.caddy nixpkgs.supervisord nixpkgs.bash nixpkgs.coreutils
+
+# Copy built PHP environment from builder
+COPY --from=builder /tmp/php-build /opt/php-app
+
+# Copy application code and dependencies
+COPY --from=builder vendor/ /var/www/html/vendor/
+COPY src/ /var/www/html/src/
+COPY public/ /var/www/html/public/
+
+# Copy configuration files
+COPY docker/supervisord.conf /etc/supervisord.conf
+COPY docker/caddy/Caddyfile /etc/caddy/Caddyfile
+COPY docker/php/php.ini /etc/php/php.ini
+
+# Create necessary directories
+RUN mkdir -p /var/log/php-fpm /var/log/caddy /var/run /tmp/sessions
+
+# Set proper permissions
+RUN chown -R nixbld:nixbld /var/www/html /var/log/php-fpm /var/log/caddy /tmp/sessions
+
+# Environment variables
+ENV PHP_FPM_LISTEN=/var/run/php-fpm.sock
+ENV CADDY_CONFIG=/etc/caddy/Caddyfile
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost/health || exit 1
+
+# Expose ports
+EXPOSE 80 443
+
+# Start supervisord to manage PHP-FPM and Caddy
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]

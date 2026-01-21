@@ -1,0 +1,49 @@
+# NixVM PHP Development Environment
+
+# Dependencies
+vendor/
+node_modules/
+
+# Testing
+phpunit.xml
+coverage/
+.phpunit.result.cache
+
+# Code Quality
+.php-cs-fixer.cache
+phpstan.neon
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Database
+*.sqlite
+*.db
+
+# Docker
+docker/data/
+docker/logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Nix
+result/
+
+# Composer
+composer.lock

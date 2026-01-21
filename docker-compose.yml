@@ -1,0 +1,87 @@
+services:
+  # PHP-FPM 8.3
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: nixvm_php
+    volumes:
+      - ./:/var/www/html
+      - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf
+    working_dir: /var/www/html
+    networks:
+      - nixvm_network
+    depends_on:
+      - db
+    environment:
+      - PHP_MEMORY_LIMIT=256M
+      - PHP_UPLOAD_MAX_FILESIZE=100M
+      - PHP_POST_MAX_SIZE=100M
+    restart: unless-stopped
+
+  # MariaDB Database
+  db:
+    image: mariadb:10.11
+    container_name: nixvm_mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: nixvm_dev
+      MYSQL_USER: nixvm_user
+      MYSQL_PASSWORD: nixvm_pass
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./docker/mariadb/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - nixvm_network
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Caddy Web Server
+  caddy:
+    image: caddy:2-alpine
+    container_name: nixvm_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - nixvm_network
+    depends_on:
+      - php
+    environment:
+      - PHP_FPM_HOST=php:9000
+
+  # phpMyAdmin (optional)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: nixvm_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: nixvm_user
+      PMA_PASSWORD: nixvm_pass
+      UPLOAD_LIMIT: 100M
+    networks:
+      - nixvm_network
+    depends_on:
+      - db
+
+volumes:
+  mariadb_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  nixvm_network:
+    driver: bridge

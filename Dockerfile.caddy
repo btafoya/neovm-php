@@ -1,0 +1,35 @@
+# NixOS-based Standalone Caddy Web Server
+FROM nixos/nix:latest
+
+# Install Caddy via Nix
+RUN nix-env -iA nixpkgs.caddy nixpkgs.bash nixpkgs.coreutils
+
+# Create Caddy directories
+RUN mkdir -p /etc/caddy /var/log/caddy /var/www/html /data /config
+
+# Copy NixVM Caddyfile
+COPY docker/caddy/Caddyfile /etc/caddy/Caddyfile
+
+# Copy static files if any
+COPY public/ /var/www/html/
+
+# Create health check script
+RUN echo '#!/bin/bash\ncurl -f http://localhost:2019/config/ || exit 1' > /usr/local/bin/healthcheck.sh && \
+    chmod +x /usr/local/bin/healthcheck.sh
+
+# Set proper permissions
+RUN chown -R nixbld:nixbld /etc/caddy /var/log/caddy /data /config
+
+# Environment variables
+ENV XDG_CONFIG_HOME=/config
+ENV XDG_DATA_HOME=/data
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD /usr/local/bin/healthcheck.sh
+
+# Expose HTTP and HTTPS ports
+EXPOSE 80 443
+
+# Start Caddy
+CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

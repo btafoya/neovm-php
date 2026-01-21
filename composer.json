@@ -1,0 +1,51 @@
+{
+    "name": "nixvm/php-dev-environment",
+    "description": "PHP 8.3 development environment with MariaDB and Caddy",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "NixVM",
+            "email": "dev@nixvm.local"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "ext-pdo": "*",
+        "ext-mysqli": "*",
+        "ext-mbstring": "*",
+        "ext-curl": "*",
+        "ext-gd": "*",
+        "ext-zip": "*",
+        "ext-intl": "*",
+        "ext-imap": "*",
+        "ext-imagick": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0",
+        "phpstan/phpstan": "^1.10",
+        "friendsofphp/php-cs-fixer": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "NixVM\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "NixVM\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "test:coverage": "phpunit --coverage-html coverage",
+        "analyze": "phpstan analyse src tests",
+        "fix": "php-cs-fixer fix",
+        "check": "php-cs-fixer check",
+        "dev:serve": "cd public && php -S localhost:8000"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}

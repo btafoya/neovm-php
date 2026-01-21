@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # PHP Application with Caddy Routing (NixOS-based)
+  app:
+    image: ${DOCKERHUB_USERNAME}/nixvm:php-app-latest
+    container_name: nixvm_php_app
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+      - DB_HOST=db
+      - DB_NAME=nixvm_dev
+      - DB_USER=nixvm_user
+      - DB_PASSWORD=nixvm_pass
+    depends_on:
+      - db
+    volumes:
+      # Mount source code for development (optional)
+      - ./public:/var/www/html/public:ro
+      - ./src:/var/www/html/src:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - nixvm_network
+
+  # MariaDB Database (NixOS-based)
+  db:
+    image: ${DOCKERHUB_USERNAME}/nixvm:mariadb-latest
+    container_name: nixvm_mariadb
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-rootpassword}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-nixvm_dev}
+      - MYSQL_USER=${MYSQL_USER:-nixvm_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-nixvm_pass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - nixvm_network
+
+  # Standalone Caddy Web Server (NixOS-based)
+  caddy:
+    image: ${DOCKERHUB_USERNAME}/nixvm:caddy-latest
+    container_name: nixvm_caddy_standalone
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      - APP_ENV=${APP_ENV:-development}
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2019/config/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - nixvm_network
+    profiles:
+      - standalone-caddy
+
+  # phpMyAdmin (NixOS-based)
+  phpmyadmin:
+    image: ${DOCKERHUB_USERNAME}/nixvm:phpmyadmin-latest
+    container_name: nixvm_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      - PMA_HOST=db
+      - PMA_PORT=3306
+      - PMA_USER=${MYSQL_USER:-nixvm_user}
+      - PMA_PASSWORD=${MYSQL_PASSWORD:-nixvm_pass}
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - nixvm_network
+    profiles:
+      - phpmyadmin
+
+volumes:
+  mariadb_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+networks:
+  nixvm_network:
+    driver: bridge
+    name: nixvm_network
