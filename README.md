@@ -22,9 +22,9 @@
   <img src="https://img.shields.io/badge/Docker-Enabled-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
 </p>
 
-A complete PHP production and development environment with MariaDB and Caddy, built using Nix for reproducible builds and Docker for containerization.
+A complete PHP development and production environment with MariaDB and Caddy. Uses Nix for reproducible builds and Docker for containerization.
 
-## 📦 Container Images
+## Container Images
 
 [![Container Registry](https://img.shields.io/badge/Container-GHCR-2496ED.svg)](https://github.com/btafoya/neovm-php/pkgs/container/neovm-php)
 [![CI Status](https://img.shields.io/github/actions/workflow/status/btafoya/neovm-php/docker-publish.yml)](https://github.com/btafoya/neovm-php/actions/workflows/docker-publish.yml)
@@ -35,7 +35,7 @@ A complete PHP production and development environment with MariaDB and Caddy, bu
 - `ghcr.io/btafoya/neovm-php:caddy-latest` - Standalone Caddy web server
 - `ghcr.io/btafoya/neovm-php:phpmyadmin-latest` - phpMyAdmin database manager
 
-## 🛠️ Tech Stack & Features
+## Tech Stack & Features
 
 [![Nix Flake](https://img.shields.io/badge/Nix-Flake-5277C3.svg)](https://nixos.org/)
 [![GitHub Actions](https://img.shields.io/badge/CI-CD-GitHub%20Actions-2088FF.svg)](https://github.com/features/actions)
@@ -43,26 +43,26 @@ A complete PHP production and development environment with MariaDB and Caddy, bu
 [![Interactive Install](https://img.shields.io/badge/Install-Interactive-FF6B35.svg)](./install.sh)
 
 ### Key Features
-- 🔒 **Reproducible Builds** - Nix ensures identical environments
-- 🐳 **Container Ready** - Pre-built Docker images on GHCR
-- ⚡ **Fast Setup** - Interactive installer configures everything
-- 🔧 **Development Focused** - Xdebug, error reporting, hot reload
-- 🔄 **Production Ready** - Environment-specific configurations
-- 📊 **Health Monitoring** - Built-in health checks and logging
+- **Reproducible Builds** - Nix ensures identical environments across dev and prod
+- **Container Ready** - Pre-built Docker images on GHCR
+- **Fast Setup** - Interactive installer handles configuration
+- **Development Focused** - Includes Xdebug, error reporting, and hot reload
+- **Production Ready** - Environment-specific configs via APP_ENV
+- **Health Monitoring** - Built-in health checks and logging
 
-## 🤝 Contributing & Community
+## Contributing & Community
 
 [![Contributors](https://img.shields.io/github/contributors/btafoya/neovm-php.svg)](https://github.com/btafoya/neovm-php/graphs/contributors)
 [![GitHub last commit](https://img.shields.io/github/last-commit/btafoya/neovm-php.svg)](https://github.com/btafoya/neovm-php/commits/main)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/btafoya/neovm-php/blob/main/CONTRIBUTING.md)
 
 ### How to Contribute
-- 🐛 **Report Issues** - Found a bug? [Open an issue](https://github.com/btafoya/neovm-php/issues)
-- 💡 **Suggest Features** - Have an idea? [Start a discussion](https://github.com/btafoya/neovm-php/discussions)
-- 🔧 **Contribute Code** - See our [contributing guide](./CONTRIBUTING.md)
-- 📖 **Improve Docs** - Help make documentation better
+- **Report Issues** - [Open an issue](https://github.com/btafoya/neovm-php/issues) if you find a bug
+- **Suggest Features** - [Start a discussion](https://github.com/btafoya/neovm-php/discussions) with your idea
+- **Contribute Code** - See our [contributing guide](./CONTRIBUTING.md)
+- **Improve Docs** - Documentation improvements are always welcome
 
-## 🚀 Quick Start
+## Quick Start
 
 ### One-Line Installation (No Git Clone Required)
 
@@ -125,7 +125,7 @@ nix develop
 nix-shell
 ```
 
-## 📋 What's Included
+## What's Included
 
 - **PHP 8.4, 8.3, 8.2** with extensions: PDO, MySQLi, GD, ZIP, IMAP, Imagick, Mbstring, cURL, Intl, OPcache, Xdebug
 - **MariaDB 10.11** database server
@@ -137,18 +137,18 @@ nix-shell
 
 **Note**: The `mcrypt` extension is not available in PHP 8 as it was removed from PHP core in PHP 7.2+. Consider using `openssl` or `sodium` extensions instead.
 
-## 🛠️ Installation Script
+## Installation Script
 
 The `install.sh` script provides a comprehensive interactive setup experience:
 
 ### Features
-- **100% Interactive**: Prompts for all configuration options
-- **Smart Defaults**: Pre-filled values from `.env.example`
-- **Validation**: Input validation for domains, emails, ports, etc.
-- **SSL Configuration**: Let's Encrypt, custom certs, or self-signed
-- **Environment-Specific**: Different options for development/production
-- **Progress Tracking**: Visual progress indicators
-- **Error Handling**: Graceful failure recovery
+- Prompts for all configuration options interactively
+- Pre-filled defaults from `.env.example`
+- Validates domains, emails, ports, and memory values
+- Configures SSL (Let's Encrypt, custom certs, or self-signed)
+- Environment-specific options for development vs production
+- Visual progress indicators
+- Graceful error handling and recovery
 
 ### Usage
 ```bash
@@ -171,9 +171,9 @@ The `install.sh` script provides a comprehensive interactive setup experience:
 - **`docker/caddy/Caddyfile`** - Web server configuration
 - **Updated `docker-compose.hub.yml`** - Ready-to-use Docker setup
 
-## 🐳 Docker Hub Images (NixOS-based)
+## Docker Hub Images (NixOS-based)
 
-**All images are built on NixOS for maximum reproducibility and consistency with the NixVM philosophy.**
+All images are built on NixOS for reproducibility and consistency.
 
 ### Available Images
 
@@ -225,17 +225,17 @@ docker run -p 8080:80 \
   ghcr.io/btafoya/neovm-php:phpmyadmin-latest
 ```
 
-## 🔄 NixOS-Based Architecture
+## NixOS-Based Architecture
 
-**Why NixOS for Docker Images?**
+### Why NixOS for Docker Images?
 
-NixVM uses NixOS-based Docker images to provide:
+NixVM uses NixOS-based Docker images for:
 
-- **100% Reproducibility**: Same environment locally and in containers
-- **Declarative Configuration**: Infrastructure as code with Nix
-- **Version Pinning**: Exact package versions across all environments
-- **Consistency**: Local `nix develop` matches container environment
-- **Security**: Minimal attack surface with declarative builds
+- Same environment locally and in containers (100% reproducibility)
+- Infrastructure as code with Nix's declarative configuration
+- Exact package versions pinned across all environments
+- Local `nix develop` matches container environment exactly
+- Minimal attack surface with declarative builds
 
 ### Development vs Production Parity
 
@@ -257,14 +257,14 @@ Images are automatically built and published to `ghcr.io/btafoya/neovm-php` via 
 - **Pull Requests**: Test builds without publishing
 - **Security Scanning**: Automated vulnerability checks
 
-## 🌐 Access Points
+## Access Points
 
 - **Main Application**: http://localhost
 - **Alternative Domain**: http://dev.nixvm.localhost
 - **phpMyAdmin**: http://localhost:8080
 - **Database**: localhost:3306
 
-## 🗄️ Database Credentials
+## Database Credentials
 
 ```env
 DB_HOST=localhost
@@ -275,7 +275,7 @@ DB_PASSWORD=nixvm_pass
 DB_ROOT_PASSWORD=rootpassword
 ```
 
-## 🛠️ Development Commands
+## Development Commands
 
 ```bash
 # Install PHP dependencies
@@ -294,7 +294,7 @@ composer fix
 composer dev:serve
 ```
 
-## 🛠️ Available CLI Tools
+## Available CLI Tools
 
 The development environment includes a comprehensive set of CLI tools for development:
 
@@ -370,7 +370,7 @@ gh pr create --title "My changes" --body "Description"
 htop
 ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ├── flake.nix              # Nix flake definition
@@ -386,7 +386,7 @@ htop
 └── .mpc.json            # MCP server configuration
 ```
 
-## 🔧 Configuration Files
+## Configuration Files
 
 ### PHP Configuration
 - `docker/php/php.ini` - PHP settings
@@ -398,14 +398,14 @@ htop
 ### Database
 - `docker/mariadb/init.sql` - Database initialization
 
-## 🐛 Debugging
+## Debugging
 
 Xdebug is configured and ready:
 - **IDE Port**: 9003
 - **Mode**: develop,debug
 - **Start with request**: enabled
 
-## 📊 Monitoring
+## Monitoring
 
 ```bash
 # View service status
@@ -418,7 +418,7 @@ docker-compose logs [service_name]
 docker-compose exec db mariadb -u nixvm_user -p nixvm_pass nixvm_dev
 ```
 
-## 🔒 Security Notes
+## Security Notes
 
 ### Development Environment
 The default setup is configured for development with relaxed security settings:
@@ -474,11 +474,11 @@ services:
 
 **⚠️ Important:** Always review and harden security settings before production deployment. The Docker Hub images provide a solid foundation but require proper security configuration for production use.
 
-## 🤝 Contributing
+## Contributing
 
-This environment is designed to be easily extensible. Add new services to `docker-compose.yml` or modify the Nix flake for additional tools.
+This environment is designed to be extensible. Add new services to `docker-compose.yml` or modify the Nix flake for additional tools.
 
-## 📚 Resources
+## Resources
 
 - [PHP Documentation](https://www.php.net/docs.php)
 - [Caddy Documentation](https://caddyserver.com/docs/)
@@ -487,9 +487,9 @@ This environment is designed to be easily extensible. Add new services to `docke
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-Built with ❤️ using cutting-edge open source technologies.
+Built using open source technologies.
 
 [![Powered by Nix](https://img.shields.io/badge/Powered%20by-Nix-5277C3.svg)](https://nixos.org/)
 [![Made with PHP](https://img.shields.io/badge/Made%20with-PHP-777BB4.svg)](https://php.net/)
@@ -517,9 +517,7 @@ Built with ❤️ using cutting-edge open source technologies.
 
 <div align="center">
 
-**🚀 Happy coding with NixVM! 🚀**
-
-*Built for developers, by developers*
+Built for developers, by developers.
 
 </div></content>
 <parameter name="filePath">README.md
