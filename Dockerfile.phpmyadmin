@@ -1,22 +1,26 @@
-# phpMyAdmin with Nginx and PHP-FPM
-FROM phpmyadmin/phpmyadmin:latest
+# phpMyAdmin (NixOS-based)
+FROM nixos/nix:latest AS builder
 
-# Copy custom configuration
+RUN nix-channel --add https://nixos.org/channels/nixos-unstable nixpkgs && nix-channel --update
+RUN nix-env -f '<nixpkgs>' -iA php83
+RUN nix-env -f '<nixpkgs>' -iA php83Extensions.pdo_mysql
+RUN nix-env -f '<nixpkgs>' -iA php83Extensions.mysqli
+RUN nix-env -f '<nixpkgs>' -iA php83Extensions.mbstring
+RUN nix-env -f '<nixpkgs>' -iA caddy
+
+# Runtime stage
+FROM nixos/nix:latest
+
+COPY --from=builder /nix/store/*php* /nix/store/*caddy* /nix/store/*curl* /usr/local/bin/
 COPY docker/phpmyadmin/config.inc.php /etc/phpmyadmin/config.inc.php
 
-# Environment variables for phpMyAdmin
+ENV PATH=/nix/var/nix/profiles/default/bin:/nix/store/*/bin:$PATH
 ENV PMA_HOST=db
 ENV PMA_PORT=3306
 ENV PMA_USER=nixvm_user
 ENV PMA_PASSWORD=nixvm_pass
 ENV UPLOAD_LIMIT=100M
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost/ || exit 1
-
-# Expose port
 EXPOSE 80
 
-# Use default phpMyAdmin entrypoint
-CMD ["apache2-foreground"]
+CMD ["caddy"]

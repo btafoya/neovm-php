@@ -1,94 +1,56 @@
-# PHP Application with Caddy Routing
-FROM php:8.3-fpm
+# PHP Application (NixOS-based)
+# Uses Nix packages built via flake.nix
 
-# Install system dependencies for PHP extensions
-RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    libcurl4-openssl-dev \
-    libssl-dev \
-    libc-client-dev \
-    libkrb5-dev \
-    libmagickwand-dev \
-    imagemagick \
-    supervisor \
-    && rm -rf /var/lib/apt/lists/*
+FROM nixos/nix:latest AS builder
 
-# Configure and install PHP extensions
-RUN docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
-    && docker-php-ext-install \
-        pdo_mysql \
-        mysqli \
-        mbstring \
-        curl \
-        gd \
-        zip \
-        intl \
-        opcache \
-        imap
+# Install Nix and build PHP with all extensions
+RUN nix-channel --add https://nixos.org/channels/nixos-unstable nixpkgs && nix-channel --update
 
-# Install Imagick extension
-RUN pecl install imagick \
-    && docker-php-ext-enable imagick
+# Build PHP 8.3 with extensions using Nix
+RUN nix-env -f '<nixpkgs>' -iA php83
 
-# Install Xdebug
-RUN pecl install xdebug \
-    && docker-php-ext-enable xdebug
+# Runtime stage
+FROM nixos/nix:latest
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Copy PHP from builder
+COPY --from=builder /nix/store/*php* /nix/store/*php-cgi* /nix/store/*composer* /usr/local/bin/
 
-# Set working directory
-WORKDIR /var/www/html
-
-# Copy composer files first for better caching
-COPY composer.json ./
-RUN if [ -s composer.lock ]; then echo "Using existing composer.lock"; else rm -f composer.lock; fi
-
-# Install PHP dependencies (production)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
-
-# Copy application code
-COPY src/ ./src/
-COPY public/ ./public/
+# Copy application source
+COPY --chmod=755 . /var/www/html
 
 # Copy configuration files
-COPY docker/supervisord.conf /etc/supervisord.conf
-COPY docker/caddy/Caddyfile.development /etc/caddy/Caddyfile.development
-COPY docker/caddy/Caddyfile.production /etc/caddy/Caddyfile.production
-COPY docker/start.sh /usr/local/bin/start.sh
-COPY docker/php/php.ini /usr/local/etc/php/php.ini.development
-COPY docker/php/php.production.ini /usr/local/etc/php/php.ini.production
+COPY --chmod=644 docker/caddy/Caddyfile /etc/caddy/Caddyfile
+COPY --chmod=644 docker/caddy/Caddyfile.development /etc/caddy/Caddyfile.development
+COPY --chmod=644 docker/caddy/Caddyfile.production /etc/caddy/Caddyfile.production
+COPY --chmod=755 docker/start.sh /usr/local/bin/start.sh
+COPY --chmod=644 docker/php/php.ini /usr/local/etc/php/
+COPY --chmod=644 docker/php/php.production.ini /usr/local/etc/php/
+COPY --chmod=644 docker/supervisord.conf /etc/supervisord.conf
 
-# Install Caddy
-RUN apt-get update && apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl \
-    && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg \
-    && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list \
-    && apt-get update && apt-get install -y caddy \
-    && rm -rf /var/lib/apt/lists/*
+# Install runtime dependencies via Nix
+RUN nix-env -f '<nixpkgs>' -iA \
+    php83Extensions.pdo_mysql \
+    php83Extensions.mysqli \
+    php83Extensions.mbstring \
+    php83Extensions.curl \
+    php83Extensions.gd \
+    php83Extensions.zip \
+    php83Extensions.intl \
+    php83Extensions.opcache \
+    caddy \
+    curl \
+    supervisor \
+    && mkdir -p /var/log/php-fpm /var/log/caddy /var/run /tmp/sessions
 
-# Make startup script executable
-RUN chmod +x /usr/local/bin/start.sh
-
-# Create necessary directories
-RUN mkdir -p /var/log/php-fpm /var/log/caddy /var/run /tmp/sessions
-
-# Set proper permissions
-RUN chown -R www-data:www-data /var/www/html /var/log/php-fpm /var/log/caddy /tmp/sessions
-
-# Environment variables
+# Set up environment
+ENV PATH=/nix/var/nix/profiles/default/bin:/nix/store/*/bin:$PATH
 ENV PHP_FPM_LISTEN=/var/run/php-fpm.sock
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost/health || exit 1
+WORKDIR /var/www/html
 
-# Expose ports
+# Create directories and set permissions
+RUN mkdir -p /var/log/php-fpm /var/log/caddy /var/run /tmp/sessions
+
 EXPOSE 80 443
 
-# Start the application with environment-based configuration
 CMD ["/usr/local/bin/start.sh"]
