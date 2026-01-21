@@ -23,9 +23,9 @@ OPTIONAL_TOOLS=("docker" "docker-compose")
 
 # Check if running interactively (has TTY)
 IS_INTERACTIVE=true
-if [ ! -t 0 ]; then
-    IS_INTERACTIVE=false
-fi
+#if [ ! -t 0 ]; then
+    #IS_INTERACTIVE=false
+#fi
 
 # Non-interactive mode flag
 NON_INTERACTIVE=false
