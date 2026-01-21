@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # NixVM Interactive Install Script
-# Comprehensive setup for PHP 8.3 + MariaDB + Caddy development environment
+# Comprehensive setup for PHP + MariaDB + Caddy development environment
 
 set -euo pipefail
 
@@ -21,7 +21,7 @@ NC='\033[0m' # No Color
 
 # Progress tracking
 CURRENT_STEP=0
-TOTAL_STEPS=15
+TOTAL_STEPS=16
 
 # Configuration variables (will be set interactively)
 DOCKERHUB_USERNAME=""
@@ -45,6 +45,7 @@ MYSQL_PASSWORD=""
 PHP_MEMORY_LIMIT=""
 PHP_UPLOAD_MAX_FILESIZE=""
 PHP_POST_MAX_SIZE=""
+PHP_VERSION=""
 COMPOSER_ALLOW_SUPERUSER=""
 COMPOSER_MEMORY_LIMIT=""
 INSTALL_MODE=""
@@ -59,9 +60,10 @@ show_progress() {
 }
 
 print_header() {
+    local php_version="${PHP_VERSION:-8.4}"
     echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${BLUE}║                 🚀 NixVM Interactive Installer              ║${NC}"
-    echo -e "${BLUE}║              PHP 8.3 + MariaDB + Caddy Setup                ║${NC}"
+    echo -e "${BLUE}║              PHP ${php_version} + MariaDB + Caddy Setup                ║${NC}"
     echo -e "${BLUE}║                      Version $SCRIPT_VERSION                     ║${NC}"
     echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
     echo ""
@@ -682,6 +684,43 @@ configure_database() {
     print_success "Database configuration complete"
 }
 
+configure_php_version() {
+    ((CURRENT_STEP++))
+    show_progress $CURRENT_STEP "Configuring PHP version"
+
+    print_step "🐘 PHP Version Selection"
+
+    echo "Select PHP version to install:"
+    echo "1) PHP 8.4 (Latest stable - Recommended)"
+    echo "2) PHP 8.3 (Stable)"
+    echo "3) PHP 8.2 (Stable)"
+    echo ""
+
+    while true; do
+        read -p "Choose PHP version [1]: " choice
+        case ${choice:-1} in
+            1)
+                PHP_VERSION="8.4"
+                print_success "Selected: PHP 8.4"
+                break
+                ;;
+            2)
+                PHP_VERSION="8.3"
+                print_success "Selected: PHP 8.3"
+                break
+                ;;
+            3)
+                PHP_VERSION="8.2"
+                print_success "Selected: PHP 8.2"
+                break
+                ;;
+            *)
+                print_error "Invalid choice. Please enter 1, 2, or 3."
+                ;;
+        esac
+    done
+}
+
 configure_php() {
     ((CURRENT_STEP++))
     show_progress $CURRENT_STEP "Configuring PHP"
@@ -759,6 +798,7 @@ show_configuration_summary() {
 
     printf "🐬 Database:       %s\n" "$MYSQL_DATABASE"
     printf "👤 DB User:        %s\n" "$MYSQL_USER"
+    printf "🐘 PHP Version:    %s\n" "$PHP_VERSION"
     printf "🐘 PHP Memory:     %s\n" "$PHP_MEMORY_LIMIT"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
@@ -820,6 +860,7 @@ MYSQL_USER=$MYSQL_USER
 MYSQL_PASSWORD=$MYSQL_PASSWORD
 
 # PHP Configuration
+PHP_VERSION=$PHP_VERSION
 PHP_MEMORY_LIMIT=$PHP_MEMORY_LIMIT
 PHP_UPLOAD_MAX_FILESIZE=$PHP_UPLOAD_MAX_FILESIZE
 PHP_POST_MAX_SIZE=$PHP_POST_MAX_SIZE
@@ -1143,7 +1184,7 @@ EOF
 
     $(if [ "$APP_ENV" = "development" ]; then
         echo "# Development headers"
-        echo "header X-Debug-Info \"NixVM PHP 8.3 Development\""
+        echo "header X-Debug-Info \"NixVM PHP ${PHP_VERSION} Development\""
         echo ""
         echo "# CORS for development"
         echo "@cors_preflight {"
@@ -1341,6 +1382,7 @@ main_configuration() {
     configure_ssl_renewal_info
     configure_proxy_guidance
     configure_database
+    configure_php_version
     configure_php
     configure_composer
 
