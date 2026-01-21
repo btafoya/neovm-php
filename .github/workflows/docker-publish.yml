@@ -18,7 +18,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: btafoya/neovm-php
+  IMAGE_NAME: ghcr.io/btafoya/neovm-php
 
 jobs:
   test-nix:
